@@ -17,9 +17,8 @@ class MainController:
 
     def send_raw_command(self, command):
         if self.ser.is_open:
-            command = command + "\r\n"
-            self.ser.write(command.encode('utf-8')+b'\r')
-            # print(f"Sent: {command.strip()}")
+            # command = command
+            self.ser.write(command.encode('utf-8')+b'\r\n')
         else:
             print("Error: Serial port is closed!")
 
