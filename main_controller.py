@@ -25,9 +25,14 @@ class MainController:
 
     def read_serial(self):
         while True:
-            if self.ser.in_waiting > 0:
-                response = self.ser.readline().decode('utf8').strip()
-                print(response)
+            try:
+                if self.ser.in_waiting > 0:
+                    response = self.ser.readline().decode('utf8').strip()
+                    print(response)
+            except Exception as e:
+                print(f"Error reading serial: {e}")
+                break
+
 
     def disconnect(self):
         self.ser.close()
