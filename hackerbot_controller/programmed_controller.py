@@ -1,8 +1,8 @@
-from main_controller import MainController
+from .main_controller import MainController
 
 class ProgrammedController(MainController):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, port="/dev/ttyACM0", board="adafruit:samd:adafruit_qt_py_m0"):
+        super().__init__(port, board)
         self.board, self.port = super().get_board_and_port()
 
     def get_ping(self):

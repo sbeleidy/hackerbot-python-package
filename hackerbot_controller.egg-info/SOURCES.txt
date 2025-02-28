@@ -1,0 +1,9 @@
+setup.py
+hackerbot_controller/__init__.py
+hackerbot_controller/main_controller.py
+hackerbot_controller/programmed_controller.py
+hackerbot_controller/test.py
+hackerbot_controller.egg-info/PKG-INFO
+hackerbot_controller.egg-info/SOURCES.txt
+hackerbot_controller.egg-info/dependency_links.txt
+hackerbot_controller.egg-info/top_level.txt
