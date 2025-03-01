@@ -17,8 +17,8 @@ class ProgrammedController(MainController):
         super().send_raw_command("INIT")
         return True
 
-    def halt_driver(self):
-        super().send_raw_command("BUMP")
+    def stop_driver(self):
+        super().send_raw_command("STOP")
         return True
 
     def move(self, l_vel, a_vel):
