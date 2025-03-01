@@ -17,9 +17,9 @@ class Navigator:
         self.exec_time = 40
         self.configured = False
         self.LOCATION_DICT = {
-            "Allen's room": (-0.8, 0, 0, self.vel),
-            "Ian's room": (-0.8, 2, 0, self.vel),
-            "Kitchen": (-0.8, 2, 0, self.vel),
+            "Allen": (-0.8, 0, 0, self.vel),
+            "Ian": (-0.8, 2, 0, self.vel),
+            "Kitchen": (0, 2, 0, self.vel),
             "Charger": (0, 0, 0, self.vel),
         }
 
@@ -43,6 +43,7 @@ class Navigator:
         try:
             self.current_location = "Charger"
             self.static_navigation("Charger")
+            logging.info("Localizing robot...")
             time.sleep(5)
         except Exception as e:
             logging.error("Error during localization: %s", e)
@@ -57,37 +58,37 @@ class Navigator:
         except Exception as e:
             logging.error("Error during reset: %s", e)
 
-    def dynamic_navigation(self, string_command):
-        """Process dynamic movement commands."""
-        if not self.configured:
-            logging.warning("Navigation not configured. Configuring now...")
-            self.configure_navigation()
+    def dynamic_navigation(self, user_input):
+        """Parse the user input and execute a sequence of static navigation actions."""
+        try:
+            user_input = user_input.lower()
 
-        string_command = string_command.lower().strip()
+            # Define possible locations to match
+            locations = list(self.LOCATION_DICT.keys())
+            location_map = {loc.lower(): loc for loc in locations}  # Map lowercase to original
 
-        # Handle docking command
-        if "dock" in string_command:
-            try:
-                self.controller.dock()
-                self.current_location = "Docking station"
-                logging.info("Docked successfully.")
-            except Exception as e:
-                logging.error("Failed to dock: %s", e)
-            return
+            # Use regex to extract locations in order of appearance
+            ordered_locs = []
+            for word in user_input.split():
+                for loc in location_map:
+                    if loc in word and location_map[loc] not in ordered_locs:
+                        ordered_locs.append(location_map[loc])
 
-        # Find a matching location in the dictionary
-        for location in self.LOCATION_DICT:
-            if location.lower() in string_command:
-                try:
-                    self.controller.goto_pos(*self.LOCATION_DICT[location])
-                    self.current_location = location
-                    logging.info("Navigated to %s.", location)
-                except Exception as e:
-                    logging.error("Failed to navigate to %s: %s", location, e)
+            if not ordered_locs:
+                logging.warning("No valid locations found in input.")
                 return
 
-        # Handle unknown commands
-        logging.warning("Unknown command. Please specify a valid destination.")
+            logging.info("Planned route: %s", " -> ".join(ordered_locs))
+
+            # Execute navigation in order
+            for loc in ordered_locs:
+                self.static_navigation(loc)
+
+            logging.info("Navigation sequence completed.")
+
+        except Exception as e:
+            logging.error("Error occurred during dynamic navigation: %s", e)
+
 
     def static_navigation(self, destination):
         """Move to a predefined static location."""
@@ -106,8 +107,8 @@ class Navigator:
 
         try:
             logging.info(
-                "Navigating to %s, current location: %s, position: %s",
-                destination, self.current_location, self.get_curr_pos()
+                "Navigating to %s, current location: %s",
+                self.get_pos(destination), self.get_pos(self.current_location) 
             )
 
             if destination == "Docking pose":
@@ -121,12 +122,35 @@ class Navigator:
         except Exception as e:
             logging.error("Failed to navigate to %s: %s", destination, e)
 
-    def get_curr_pos(self):
+    def display_menu(self):
+        print("Available commands:")
+        i = 0
+        for location in self.LOCATION_DICT:
+            i += 1
+            print(f"{i}. - {location}")
+
+    def execute_route_from_input(self):
+        while True:
+            # self.display_menu()
+            user_command = input("Enter your command (or type 'q' to quit): ")
+
+            if user_command == "q":
+                logging.info("Exiting user navigation.")
+                break
+            
+            self.dynamic_navigation(user_command)
+
+    def get_pos(self, loc):
         """Get the current position of the robot."""
-        if self.current_location in self.LOCATION_DICT:
-            return str(self.LOCATION_DICT[self.current_location])
+        if loc in self.LOCATION_DICT:
+            return f"{loc} ({self.LOCATION_DICT[loc][0]}, {self.LOCATION_DICT[loc][1]})"
         logging.warning("Current location is unknown.")
         return "Unknown"
+
+
+    def __del__(self):
+        self.controller.dock()
+        logging.info("Docking...")
 
 def main():
     navigator = Navigator()
