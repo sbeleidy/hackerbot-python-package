@@ -6,6 +6,7 @@ class MainController:
         self.port = port
         self.board = board
         self.ser = serial.Serial(port=port, baudrate=baudrate)
+        self.log_file = "serial_log.txt"
         self.read_thread = threading.Thread(target=self.read_serial)
         self.read_thread.daemon = True
         self.read_thread.start()
@@ -24,15 +25,16 @@ class MainController:
 
 
     def read_serial(self):
-        while True:
-            try:
-                if self.ser.in_waiting > 0:
-                    response = self.ser.readline().decode('utf8').strip()
-                    print(response)
-            except Exception as e:
-                print(f"Error reading serial: {e}")
-                break
-
+        with open(self.log_file, 'a') as file:  # Open the log file in append mode
+            while True:
+                try:
+                    if self.ser.in_waiting > 0:
+                        response = self.ser.readline().decode('utf8').strip()
+                        print(response)
+                        file.write(response + "\n")  # Write the output to the log file
+                except Exception as e:
+                    print(f"Error reading serial: {e}")
+                    break
 
     def disconnect(self):
         self.ser.close()

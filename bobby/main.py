@@ -1,4 +1,4 @@
-from  hackerbot_helper
+from hackerbot_helper import ProgrammedController
 
 def main():
     
