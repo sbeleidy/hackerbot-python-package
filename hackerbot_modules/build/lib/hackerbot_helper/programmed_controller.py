@@ -42,3 +42,12 @@ class ProgrammedController(MainController):
         command = f"GOTO,{x_coord},{y_coord},{angle},{speed}"
         super().send_raw_command(command)
         return True
+    
+    def get_map(self, map_id):
+        command = f"GETMAP,{map_id}"
+        super().send_raw_command(command)
+        return True
+    
+    def get_map_list(self):
+        super().send_raw_command("GETML")
+        return True

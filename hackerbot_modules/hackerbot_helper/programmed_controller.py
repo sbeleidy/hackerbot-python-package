@@ -4,6 +4,7 @@ class ProgrammedController(MainController):
     def __init__(self, port="/dev/ttyACM0", board="adafruit:samd:adafruit_qt_py_m0"):
         super().__init__(port, board)
         self.board, self.port = super().get_board_and_port()
+        self.current_map_id = None
 
     def get_ping(self):
         super().send_raw_command("PING")
@@ -44,7 +45,8 @@ class ProgrammedController(MainController):
         return True
     
     def get_map(self, map_id):
-        command = f"MAP,{map_id}"
+        self.current_map_id = map_id
+        command = f"GETMAP,{map_id}"
         super().send_raw_command(command)
         return True
     
