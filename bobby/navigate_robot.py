@@ -157,8 +157,8 @@ def main():
     
     try:
         for _ in range(3):
-            navigator.static_navigation("Allen's room")
-            navigator.static_navigation("Ian's room")
+            navigator.static_navigation("Allen")
+            navigator.static_navigation("Ian")
             navigator.static_navigation("Kitchen")
             navigator.static_navigation("Charger")
     except Exception as e:
