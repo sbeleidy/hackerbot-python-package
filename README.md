@@ -1,57 +1,46 @@
-# hackerbot_bobby
 
-## Overview
-`hackerbot_bobby` is a project designed to navigate a robot based on user input commands. This project includes a set of modules for handling navigation logic and user interaction.
+# Hackerbot Workspace
+
+Hackerbot Workspace (`hackerbot_ws`) is a project that includes modules for controlling and managing the Hackerbot system.
 
 ## Installation
 
-### Step 1: SSH into Raspberry Pi (Bobby Board)
-To connect to the Raspberry Pi (Bobby Board) remotely, use SSH:
+Follow these steps to clone the repository and set up the required dependencies.
 
+### 1. Clone the Repository
+Use SSH to clone the repository:
 ```bash
-ssh bobby@bobby
+git clone git@github.com:AllenChienXXX/hackerbot_ws.git
+```
+This will create a directory named `hackerbot_ws` and download all necessary files.
+
+### 2. Navigate to the Modules Directory
+Move into the `hackerbot_modules` directory:
+```bash
+cd hackerbot_ws/hackerbot_modules/
 ```
 
-- **Username**: `bobby`
-- **Password**: `uhohhotdog`
-
-### Step 2: Navigate to the `hackerbot_ws` Directory
-Once logged into the Raspberry Pi, navigate to the `hackerbot_ws` directory:
-
+### 3. Install Dependencies
+Install the `hackerbot-helper` package using `pip`:
 ```bash
-cd ~/hackerbot_ws
-```
-
-### Step 3: Create a Virtual Environment
-Next, create a Python virtual environment to isolate the project's dependencies:
-
-```bash
-python3 -m venv venv
-```
-
-### Step 4: Activate the Virtual Environment
-Activate the virtual environment:
-
-- **On Linux/macOS**:
-
-  ```bash
-  source venv/bin/activate
-  ```
-
-### Step 5: Install Project Dependencies
-Navigate to the `hackerbot_modules` directory and install the required modules:
-
-```bash
-cd hackerbot_modules
 pip install .
 ```
+This will install the package locally for your Python environment.
 
-### Step 6: Run the Robot Navigation
-Once the dependencies are installed, go to the `bobby` directory and run the `navigate_robot.py` script to begin navigating the robot using user input commands:
-
-```bash
-cd ../bobby
-python3 navigate_robot.py
+## Usage
+Once installed, you can import `hackerbot_helper` in your Python scripts:
+```python
+import hackerbot_helper
 ```
 
-This will start the program, and the robot will execute navigation tasks based on the commands provided by the user.
+## Troubleshooting
+If you run into issues with the installation, try the following:
+- Ensure you're using a virtual environment:  
+  ```bash
+  python3 -m venv venv
+  source venv/bin/activate
+  ```
+- Upgrade `pip` before installation:  
+  ```bash
+  pip install --upgrade pip
+  ```
