@@ -4,14 +4,11 @@ import os
 import re
 
 class MainController:
-    START_FRAME = b'\xAA\x55'  # Start-of-frame marker
-    END_FRAME = b'\x55\xAA'  # End-of-frame marker
-    ACK = b'\x06'  # ACK byte
-    NACK = b'\x15'  # NACK byte
-    TRANSFER_COMPLETE = b'\x10'  # Transfer complete signal
+    # LOG_FILE_PATH = f"/home/{os.getenv('USER')}/hackerbot_logs/serial_log.txt"
+    HOME_DIR = os.environ['HOME']
 
-    LOG_FILE_PATH = "/home/${USER}/hackerbot_logs/serial_log.txt"
-    MAP_DATA_PATH = "/home/${USER}/hackerbot_maps/map_{map_id}.txt"
+    LOG_FILE_PATH = os.path.join(HOME_DIR, "hackerbot_logs/serial_log.txt")
+    MAP_DATA_PATH = os.path.join(HOME_DIR, "hackerbot_maps/map_{map_id}.txt")
 
     def __init__(self, port="/dev/ttyACM0", board="adafruit:samd:adafruit_qt_py_m0", baudrate=230400):
         self.port = port
@@ -45,11 +42,11 @@ class MainController:
                     try:
                         if self.ser.in_waiting > 0:
                             response = self.ser.readline().decode('utf8').strip()
-                            print(f"Received: {response}")  # Debug: print what we're reading
+                            # print(f"Received: {response}")  # Debug: print what we're reading
                             if response:  # Check if the response is non-empty
                                 file.write(response + "\n")  # Write the output to the log file
                                 file.flush()  # Ensure data is written immediately
-                                print(f"Written to file: {response}")  # Debug: confirm we're writing
+                                # print(f"Written to file: {response}")  # Debug: confirm we're writing
                     except Exception as e:
                         print(f"Error reading serial: {e}")
                         break
@@ -67,7 +64,9 @@ class MainController:
         self.send_raw_command(command)
 
     def parse_map_data(self, map_id):
-
+        # Create a list to store the map data
+        map_data = []
+        
         # Read the log file
         with open(self.LOG_FILE_PATH, 'r') as file:
             log_data = file.read()
@@ -82,11 +81,52 @@ class MainController:
         for match in matches:
             # Clean up the match by removing any unnecessary spaces
             cleaned_data = match.replace(" ", "")
-            print(cleaned_data)
+            # print(cleaned_data)
+            map_data.append(cleaned_data)
 
+        # Write to the map data file
         with open(self.MAP_DATA_PATH.format(map_id=map_id), 'w') as file:
             for match in matches:
                 file.write(match + '\n')
+        
+        # Return the map data
+        return map_data
+    
+    def extract_map_id_from_log(self):
+        try:
+            # Read the log file
+            with open(self.LOG_FILE_PATH, 'r') as file:
+                log_data = file.read()
+            
+            # Pattern to match the get_map_list_frame sequence and capture the received data
+            pattern = r"INFO: Sending get_map_list_frame\s+INFO: Transmitted.*?\s+INFO: Received\s+((?:(?:[0-9A-F]{2}\s+)+)(?:[0-9A-F]{2}))\s+\((\d+)\)"
+            
+            match = re.search(pattern, log_data, re.DOTALL)
+            if not match:
+                print("No get_map_list_frame sequence found in the log")
+                return None
+                
+            # Extract the hex values
+            hex_data = match.group(1)
+            
+            # The map ID is at position 8 (zero-indexed) in the received data
+            # Split by spaces and get the 8th value
+            hex_values = hex_data.split()
+            if len(hex_values) < 9:
+                print("Received data is too short to contain map ID")
+                return None
+                
+            # Extract the hex value at position 8 (0B in your example)
+            map_id_hex = hex_values[8]
+            
+            # Convert from hex to integer
+            map_id = int(map_id_hex, 16)
+            
+            return map_id
+            
+        except Exception as e:
+            print(f"Error extracting map ID: {str(e)}")
+            return None
 
 
     def disconnect(self):

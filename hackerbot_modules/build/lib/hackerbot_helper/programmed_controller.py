@@ -1,4 +1,5 @@
 from .main_controller import MainController
+import time
 
 class ProgrammedController(MainController):
     def __init__(self, port="/dev/ttyACM0", board="adafruit:samd:adafruit_qt_py_m0"):
@@ -48,8 +49,12 @@ class ProgrammedController(MainController):
         self.current_map_id = map_id
         command = f"GETMAP,{map_id}"
         super().send_raw_command(command)
-        return True
+        time.sleep(5)
+        map_data = super().parse_map_data(map_id)
+        return map_data
     
     def get_map_list(self):
         super().send_raw_command("GETML")
-        return True
+        time.sleep(2)
+        map_id = super().extract_map_id_from_log()
+        return map_id
