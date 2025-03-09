@@ -14,7 +14,11 @@ class MainController:
         self.port = port
         self.board = board
         self.ser = serial.Serial(port=port, baudrate=baudrate)
+<<<<<<< HEAD
         
+=======
+        self.log_file = "serial_log.txt"
+>>>>>>> main
         self.read_thread = threading.Thread(target=self.read_serial)
         self.read_thread.daemon = False
         self.read_thread.start()
@@ -33,6 +37,7 @@ class MainController:
 
 
     def read_serial(self):
+<<<<<<< HEAD
         try:
             if not os.access(self.LOG_FILE_PATH, os.W_OK):
                 print(f"Error: Cannot write to {self.LOG_FILE_PATH}")
@@ -128,6 +133,18 @@ class MainController:
             print(f"Error extracting map ID: {str(e)}")
             return None
 
+=======
+        with open(self.log_file, 'a') as file:  # Open the log file in append mode
+            while True:
+                try:
+                    if self.ser.in_waiting > 0:
+                        response = self.ser.readline().decode('utf8').strip()
+                        print(response)
+                        file.write(response + "\n")  # Write the output to the log file
+                except Exception as e:
+                    print(f"Error reading serial: {e}")
+                    break
+>>>>>>> main
 
     def disconnect(self):
         self.ser.close()

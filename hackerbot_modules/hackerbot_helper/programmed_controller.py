@@ -46,6 +46,7 @@ class ProgrammedController(MainController):
         super().send_raw_command(command)
         return True
     
+<<<<<<< HEAD
     def get_map(self, map_id):
         self.current_map_id = map_id
         command = f"GETMAP,{map_id}"
@@ -59,3 +60,13 @@ class ProgrammedController(MainController):
         time.sleep(2)
         map_id = super().extract_map_id_from_log()
         return map_id
+=======
+    def get_map_list(self):
+        super().send_raw_command("GETML")
+        return True
+    
+    def get_map(self, map_id):
+        command = f"MAP,{map_id}"
+        super().send_raw_command(command)
+        return True
+>>>>>>> main
