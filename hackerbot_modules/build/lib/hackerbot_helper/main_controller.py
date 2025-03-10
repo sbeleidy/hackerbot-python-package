@@ -97,35 +97,31 @@ class MainController:
             with open(self.LOG_FILE_PATH, 'r') as file:
                 log_data = file.read()
             
-            # Pattern to match the get_map_list_frame sequence and capture the received data
-            pattern = r"INFO: Sending get_map_list_frame\s+INFO: Transmitted.*?\s+INFO: Received\s+((?:(?:[0-9A-F]{2}\s+)+)(?:[0-9A-F]{2}))\s+\((\d+)\)"
+            # Pattern to match multiple get_map_list_frame sequences and capture received data
+            pattern = r"INFO: Sending get_map_list_frame\s+INFO: Transmitted.*?\s+INFO: Received\s+((?:(?:[0-9A-F]{2}\s+)+)(?:[0-9A-F]{2}))\s+\(\d+\)"
+
+            matches = re.findall(pattern, log_data, re.DOTALL)
+            if not matches:
+                print("No get_map_list_frame sequences found in the log")
+                return []
             
-            match = re.search(pattern, log_data, re.DOTALL)
-            if not match:
-                print("No get_map_list_frame sequence found in the log")
-                return None
-                
-            # Extract the hex values
-            hex_data = match.group(1)
+            map_ids = []
             
-            # The map ID is at position 8 (zero-indexed) in the received data
-            # Split by spaces and get the 8th value
-            hex_values = hex_data.split()
-            if len(hex_values) < 9:
-                print("Received data is too short to contain map ID")
-                return None
-                
-            # Extract the hex value at position 8 (0B in your example)
-            map_id_hex = hex_values[8]
+            for hex_data in matches:
+                hex_values = hex_data.split()
+                if len(hex_values) >= 9:
+                    # Extract the 8th hex value (zero-indexed)
+                    map_id_hex = hex_values[8]
+                    # Convert hex to integer
+                    map_id = int(map_id_hex, 16)
+                    map_ids.append(map_id)
             
-            # Convert from hex to integer
-            map_id = int(map_id_hex, 16)
-            
-            return map_id
-            
+            return map_ids
+
         except Exception as e:
-            print(f"Error extracting map ID: {str(e)}")
-            return None
+            print(f"Error extracting map IDs: {str(e)}")
+            return []
+
         
     def disconnect(self):
         self.ser.close()
