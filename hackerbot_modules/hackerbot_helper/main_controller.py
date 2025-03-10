@@ -15,6 +15,7 @@ class MainController:
         self.board = board
         self.baudrate = baudrate
         self.ser = None
+        self.state = None
 
         try:
             self.ser = serial.Serial(port=port, baudrate=baudrate, timeout=1)
@@ -34,12 +35,15 @@ class MainController:
         if self.ser and self.ser.is_open:
             try:
                 self.ser.write(command.encode('utf-8') + b'\r\n')
+                self.state = command
             except serial.SerialException as e:
                 raise IOError(f"Error writing to serial port: {e}")
         else:
             raise ConnectionError("Serial port is closed or unavailable!")
 
-
+    def get_state(self):    
+        return self.state
+    
     def read_serial(self):
         if not self.ser:
             raise ConnectionError("Serial connection not initialized.")
