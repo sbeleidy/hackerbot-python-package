@@ -10,7 +10,7 @@ def main():
     time.sleep(1)
     controller.activate_machine_mode()
     time.sleep(1)
-    controller.get_versions()
+    controller.get_ping()
     time.sleep(1)
     controller.deactivate_machine_mode()
     time.sleep(1)
