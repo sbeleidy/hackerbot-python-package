@@ -7,16 +7,18 @@ class ProgrammedController(MainController):
         try:
             super().__init__(port, board)
             self.board, self.port = super().get_board_and_port()
+            self.controller_initialized = True
             self.driver_initialized = False
 
             self.error_message = ""
         except Exception as e:
             self.error_message = f"Error initializing ProgrammedController: {e}"
             logging.error(f"Error initializing ProgrammedController: {e}")
-            raise
+            self.controller_initialized = False
 
     def get_ping(self):
         try:
+            self.check_controller_init()
             super().send_raw_command("PING")
             return True
         except Exception as e:
@@ -25,6 +27,7 @@ class ProgrammedController(MainController):
 
     def get_versions(self):
         try:
+            self.check_controller_init()
             super().send_raw_command("VERSION")
             return True
         except Exception as e:
@@ -33,6 +36,7 @@ class ProgrammedController(MainController):
 
     def init_driver(self):
         try:
+            self.check_controller_init()
             super().send_raw_command("INIT")
             self.driver_initialized = True
             return True
@@ -42,6 +46,7 @@ class ProgrammedController(MainController):
 
     def stop_driver(self):
         try:
+            self.check_driver_init()
             super().send_raw_command("STOP")
             self.driver_initialized = False
             return True
@@ -51,6 +56,7 @@ class ProgrammedController(MainController):
 
     def move(self, l_vel, a_vel):
         try:
+            self.check_controller_init()
             command = f"MOVE,{l_vel},{a_vel}"
             super().send_raw_command(command)
             return True
@@ -60,6 +66,7 @@ class ProgrammedController(MainController):
 
     def quickmap(self):
         try:
+            self.check_controller_init()
             self.check_driver_init()
             super().send_raw_command("QUICKMAP")
             return True
@@ -69,6 +76,7 @@ class ProgrammedController(MainController):
 
     def dock(self):
         try:
+            self.check_controller_init()
             super().send_raw_command("DOCK")
             return True
         except Exception as e:
@@ -77,6 +85,7 @@ class ProgrammedController(MainController):
 
     def leave_base(self):
         try:
+            self.check_controller_init()
             super().send_raw_command("ENTER")
             return True
         except Exception as e:
@@ -85,6 +94,7 @@ class ProgrammedController(MainController):
 
     def goto_pos(self, x_coord, y_coord, angle, speed):
         try:
+            self.check_controller_init()
             self.check_driver_init()
             command = f"GOTO,{x_coord},{y_coord},{angle},{speed}"
             super().send_raw_command(command)
@@ -95,6 +105,7 @@ class ProgrammedController(MainController):
     
     def get_map(self, map_id):
         try:
+            self.check_controller_init()
             self.check_driver_init()
             command = f"GETMAP,{map_id}"
             super().send_raw_command(command)
@@ -107,6 +118,7 @@ class ProgrammedController(MainController):
     
     def get_map_list(self):
         try:
+            self.check_controller_init()
             self.check_driver_init()
             super().send_raw_command("GETML")
             time.sleep(2)
@@ -130,3 +142,8 @@ class ProgrammedController(MainController):
         if not self.driver_initialized:
             self.log_error("Error: Driver not initialized. Please initialize the driver first.")
             raise Exception("Driver not initialized. Please initialize the driver first.")
+        
+    def check_controller_init(self):
+        if not self.controller_initialized:
+            self.log_error("Error: Controller not initialized. Please initialize the controller first.")
+            raise Exception("Controller not initialized. Please initialize the controller first.")
