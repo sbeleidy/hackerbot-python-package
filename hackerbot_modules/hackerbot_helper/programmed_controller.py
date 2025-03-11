@@ -150,8 +150,7 @@ class ProgrammedController(MainController):
         return super().get_state()
     
     def get_error(self):
-        if super().ser_error:
-            return super().ser_error + self.error_message
+        self.error_message = super().get_ser_error()
         return self.error_message
 
     def log_error(self, error):

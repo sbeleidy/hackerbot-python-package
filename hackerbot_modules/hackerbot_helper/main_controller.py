@@ -45,6 +45,9 @@ class MainController:
     def get_state(self):    
         return self.state
     
+    def get_ser_error(self):
+        return self.ser_error
+    
     def read_serial(self):
         if not self.ser:
             self.ser_error = "Serial connection not initialized."

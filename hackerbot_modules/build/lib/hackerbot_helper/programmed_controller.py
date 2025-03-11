@@ -150,6 +150,7 @@ class ProgrammedController(MainController):
         return super().get_state()
     
     def get_error(self):
+        self.error_message = super().get_ser_error()
         return self.error_message
 
     def log_error(self, error):
@@ -175,3 +176,5 @@ class ProgrammedController(MainController):
         except Exception as e:
             self.log_error(f"Error in stop_controller: {e}")
             return False
+        
+    

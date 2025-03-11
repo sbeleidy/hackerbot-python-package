@@ -15,6 +15,7 @@ class MainController:
         self.baudrate = baudrate
         self.ser = None
         self.state = None
+        self.ser_error = None
 
         try:
             self.ser = serial.Serial(port=port, baudrate=baudrate, timeout=1)
@@ -44,29 +45,41 @@ class MainController:
     def get_state(self):    
         return self.state
     
+    def get_ser_error(self):
+        return self.ser_error
+    
     def read_serial(self):
         if not self.ser:
-            raise ConnectionError("Serial connection not initialized.")
+            self.ser_error = "Serial connection not initialized."
+            # raise ConnectionError("Serial connection not initialized.")
         
         if not os.access(self.LOG_FILE_PATH, os.W_OK):
-            raise PermissionError(f"Cannot write to {self.LOG_FILE_PATH}")
+            self.ser_error = f"Cannot write to {self.LOG_FILE_PATH}"
+            # raise PermissionError(f"Cannot write to {self.LOG_FILE_PATH}")
 
         try:
             with open(self.LOG_FILE_PATH, 'w') as file:
                 while not self.read_thread_stop_event.is_set():  # Check the stop event to exit the loop
                     try:
+                        if not self.ser.is_open:
+                            self.ser_error = "Serial port is closed or unavailable!"
+                            # raise ConnectionError("Serial port is closed or unavailable!")
+                        
                         if self.ser.in_waiting > 0:
                             response = self.ser.readline().decode('utf-8').strip()
                             if response:
-                                print(response)
+                                # print(response)
                                 file.write(response + "\n")
                                 file.flush()
                     except serial.SerialException as e:
-                        raise IOError(f"Serial read error: {e}")
+                        self.ser_error = f"Serial read error: {e}"
+                        # raise IOError(f"Serial read error: {e}")
                     except Exception as e:
-                        raise RuntimeError(f"Unexpected read error: {e}")
+                        self.ser_error = f"Unexpected read error: {e}"
+                        # raise RuntimeError(f"Unexpected read error: {e}")
         except Exception as e:
-            raise IOError(f"File write error: {e}")
+            self.ser_error = f"File write error: {e}"
+            # raise IOError(f"File write error: {e}")
 
     def request_map(self, map_id):
         """Request a map from the device and handle the transfer."""
