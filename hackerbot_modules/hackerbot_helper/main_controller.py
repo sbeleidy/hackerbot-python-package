@@ -55,6 +55,9 @@ class MainController:
             with open(self.LOG_FILE_PATH, 'w') as file:
                 while not self.read_thread_stop_event.is_set():  # Check the stop event to exit the loop
                     try:
+                        if not self.ser.is_open:
+                            raise ConnectionError("Serial port is closed or unavailable!")
+                        
                         if self.ser.in_waiting > 0:
                             response = self.ser.readline().decode('utf-8').strip()
                             if response:
