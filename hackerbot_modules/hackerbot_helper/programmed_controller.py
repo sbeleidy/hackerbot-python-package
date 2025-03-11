@@ -16,6 +16,24 @@ class ProgrammedController(MainController):
             logging.error(f"Error initializing ProgrammedController: {e}")
             self.controller_initialized = False
 
+    def activate_machine_mode(self):
+        try:
+            self.check_controller_init()
+            super().send_raw_command("MACHINE, 1")
+            return True
+        except Exception as e:
+            self.log_error(f"Error in activate_machine_mode: {e}")
+            return False
+        
+    def deactivate_machine_mode(self):
+        try:
+            self.check_controller_init()
+            super().send_raw_command("MACHINE, 0")
+            return True
+        except Exception as e:
+            self.log_error(f"Error in deactivate_machine_mode: {e}")
+            return False
+
     def get_ping(self):
         try:
             self.check_controller_init()
@@ -147,3 +165,13 @@ class ProgrammedController(MainController):
         if not self.controller_initialized:
             self.log_error("Error: Controller not initialized. Please initialize the controller first.")
             raise Exception("Controller not initialized. Please initialize the controller first.")
+        
+    def destroy(self):
+        try:
+            time.sleep(1)
+            super().stop_read_thread()
+            self.controller_initialized = False
+            return True
+        except Exception as e:
+            self.log_error(f"Error in stop_controller: {e}")
+            return False

@@ -4,7 +4,6 @@ import os
 import re
 
 class MainController:
-    # LOG_FILE_PATH = f"/home/{os.getenv('USER')}/hackerbot_logs/serial_log.txt"
     HOME_DIR = os.environ['HOME']
 
     LOG_FILE_PATH = os.path.join(HOME_DIR, "hackerbot_logs/serial_log.txt")
@@ -24,6 +23,7 @@ class MainController:
         except Exception as e:
             raise RuntimeError(f"Unexpected error initializing serial connection: {e}")
         
+        self.read_thread_stop_event = threading.Event()
         self.read_thread = threading.Thread(target=self.read_serial)
         self.read_thread.daemon = False
         self.read_thread.start()
@@ -53,11 +53,12 @@ class MainController:
 
         try:
             with open(self.LOG_FILE_PATH, 'w') as file:
-                while True:
+                while not self.read_thread_stop_event.is_set():  # Check the stop event to exit the loop
                     try:
                         if self.ser.in_waiting > 0:
                             response = self.ser.readline().decode('utf-8').strip()
                             if response:
+                                print(response)
                                 file.write(response + "\n")
                                 file.flush()
                     except serial.SerialException as e:
@@ -133,8 +134,12 @@ class MainController:
             print(f"Error extracting map IDs: {str(e)}")
             return []
 
-        
-    def disconnect(self):
+    def stop_read_thread(self):
+        """Call this method to stop the serial reading thread."""
+        self.read_thread_stop_event.set()
+        self.read_thread.join()  # Wait for the thread to fully terminate
+
+    def disconnect_serial(self):
         if self.ser:
             try:
                 self.ser.close()
