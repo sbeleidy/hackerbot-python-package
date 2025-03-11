@@ -118,6 +118,9 @@ class ProgrammedController(MainController):
 
     def get_current_action(self):
         return super().get_state()
+    
+    def get_error(self):
+        return self.error_message
 
     def log_error(self, error):
         logging.error(error)
