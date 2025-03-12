@@ -1,7 +1,7 @@
 
-# Hackerbot Workspace
+# Hackerbot Lib
 
-Hackerbot Workspace (`hackerbot_ws`) is a project that includes modules for controlling and managing the Hackerbot system.
+Hackerbot Lib (`hackerbot_lib`) is a project that includes modules for controlling and managing the Hackerbot system.
 
 ## Installation
 
@@ -10,14 +10,14 @@ Follow these steps to clone the repository and set up the required dependencies.
 ### 1. Clone the Repository
 Use SSH to clone the repository:
 ```bash
-git clone git@github.com:AllenChienXXX/hackerbot_ws.git
+git clone git@github.com:AllenChienXXX/hackerbot_lib.git
 ```
-This will create a directory named `hackerbot_ws` and download all necessary files.
+This will create a directory named `hackerbot_lib` and download all necessary files.
 
 ### 2. Navigate to the Modules Directory
 Move into the `hackerbot_modules` directory:
 ```bash
-cd hackerbot_ws/hackerbot_modules/
+cd hackerbot_lib/hackerbot_modules/
 ```
 
 ### 3. Install Dependencies
