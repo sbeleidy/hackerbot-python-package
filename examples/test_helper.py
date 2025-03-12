@@ -7,7 +7,7 @@ def main():
     controller.get_versions()
     time.sleep(1)
     controller.get_ping()
-    controller.get_error()
+    print(controller.get_error())
     time.sleep(1)
     controller.activate_machine_mode()
     time.sleep(1)
