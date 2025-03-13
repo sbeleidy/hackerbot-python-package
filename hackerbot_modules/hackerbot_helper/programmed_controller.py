@@ -19,35 +19,10 @@ class ProgrammedController(MainController):
             logging.error(f"Error initializing ProgrammedController: {e}")
             self.controller_initialized = False
 
-    # Activate machine mode
-    def activate_machine_mode(self):
-        try:
-            self.check_controller_init()
-            super().send_raw_command("MACHINE, 1")
-            time.sleep(2)
-            response = super().get_json_from_command("machine")
-            
-            self.machine_mode = True
-            return True
-        except Exception as e:
-            self.log_error(f"Error in activate_machine_mode: {e}")
-            return False
-        
-    # Deactivate machine mode
-    def deactivate_machine_mode(self):
-        try:
-            self.check_controller_init()
-            super().send_raw_command("MACHINE, 0")
-            self.machine_mode = False
-            return True
-        except Exception as e:
-            self.log_error(f"Error in deactivate_machine_mode: {e}")
-            return False
-
     # Get ping response, check if main controller and temperature sensor are attached
     def get_ping(self):
         try:
-            self.check_controller_init()
+            self.check_system()
             super().send_raw_command("PING")
             time.sleep(1)
             response = super().get_json_from_command("ping")
@@ -64,9 +39,10 @@ class ProgrammedController(MainController):
             self.log_error(f"Error in get_ping: {e}")
             return None
 
+    # Get main controller version
     def get_versions(self):
         try:
-            self.check_controller_init()
+            self.check_system()
             super().send_raw_command("VERSION")
             time.sleep(1)
             response = super().get_json_from_command("version")
@@ -75,14 +51,72 @@ class ProgrammedController(MainController):
             self.log_error(f"Error in get_versions: {e}")
             return False
 
+    # Activate machine mode
+    def activate_machine_mode(self):
+        try:
+            self.check_controller_init()
+            self.check_driver_init()
+            super().send_raw_command("MACHINE, 1")
+            time.sleep(1)
+            response = super().get_json_from_command("machine")
+            self.machine_mode = True
+            return True
+        except Exception as e:
+            self.log_error(f"Error in activate_machine_mode: {e}")
+            return False
+        
+    # Deactivate machine mode
+    def deactivate_machine_mode(self):
+        try:
+            self.check_system()
+            super().send_raw_command("MACHINE, 0")
+            # Not fetching json response since machine mode is deactivated
+            return True
+        except Exception as e:
+            self.log_error(f"Error in deactivate_machine_mode: {e}")
+            return False
+
+    #Set TOFs
+    def enable_TOFs(self):
+        try:
+            self.check_system()
+            super().send_raw_command(f"TOFS, 1")
+            time.sleep(1)
+            response = super().get_json_from_command("tofs")
+            return True
+        except Exception as e:
+            self.log_error(f"Error in enable TOFs: {e}")
+            return False
+        
+    def disable_TOFs(self):
+        try:
+            self.check_system()
+            super().send_raw_command(f"TOFS, 0")
+            response = super().get_json_from_command("tofs")
+            return True
+        except Exception as e:
+            self.log_error(f"Error in disable TOFs: {e}")
+            return False
+        
     def init_driver(self):
         try:
             self.check_controller_init()
             super().send_raw_command("INIT")
             self.driver_initialized = True
+            # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
             self.log_error(f"Error in init_driver: {e}")
+            return False
+        
+    def leave_base(self):
+        try:
+            self.check_controller_init()
+            super().send_raw_command("ENTER")
+            # Not fetching json response since machine mode not implemented
+            return True
+        except Exception as e:
+            self.log_error(f"Error in leave_base: {e}")
             return False
 
     def stop_driver(self):
@@ -90,19 +124,10 @@ class ProgrammedController(MainController):
             self.check_driver_init()
             super().send_raw_command("STOP")
             self.driver_initialized = False
+            # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
             self.log_error(f"Error in stop_driver: {e}")
-            return False
-
-    def move(self, l_vel, a_vel):
-        try:
-            self.check_controller_init()
-            command = f"MOVE,{l_vel},{a_vel}"
-            super().send_raw_command(command)
-            return True
-        except Exception as e:
-            self.log_error(f"Error in move: {e}")
             return False
 
     def quickmap(self):
@@ -110,6 +135,7 @@ class ProgrammedController(MainController):
             self.check_controller_init()
             self.check_driver_init()
             super().send_raw_command("QUICKMAP")
+            # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
             self.log_error(f"Error in quickmap: {e}")
@@ -119,18 +145,10 @@ class ProgrammedController(MainController):
         try:
             self.check_controller_init()
             super().send_raw_command("DOCK")
+            # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
             self.log_error(f"Error in dock: {e}")
-            return False
-
-    def leave_base(self):
-        try:
-            self.check_controller_init()
-            super().send_raw_command("ENTER")
-            return True
-        except Exception as e:
-            self.log_error(f"Error in leave_base: {e}")
             return False
 
     def goto_pos(self, x_coord, y_coord, angle, speed):
@@ -139,6 +157,7 @@ class ProgrammedController(MainController):
             self.check_driver_init()
             command = f"GOTO,{x_coord},{y_coord},{angle},{speed}"
             super().send_raw_command(command)
+            # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
             self.log_error(f"Error in goto_pos: {e}")
@@ -176,6 +195,8 @@ class ProgrammedController(MainController):
             self.log_error(f"Error in get_map_list: {e}")
             return None
 
+################# End of serial command methods #################
+
     def get_current_action(self):
         return super().get_state()
     
@@ -201,6 +222,14 @@ class ProgrammedController(MainController):
         if not self.machine_mode:
             raise Exception("Machine mode needs to be activated before this command. Please activate machine mode first.")
 
+    def check_system(self):
+        try:
+            self.check_controller_init()
+            self.check_driver_init()
+            self.check_machine_mode()
+        except Exception as e:
+            raise Exception(f"System not ready: {e}")
+        
     def destroy(self):
         try:
             time.sleep(1)

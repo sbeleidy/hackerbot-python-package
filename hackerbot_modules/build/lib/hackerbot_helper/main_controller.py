@@ -103,6 +103,7 @@ class MainController:
                 if entry.get("success") == "true":
                     return entry
                 raise Exception("Fail to fetch...")
+        raise Exception(f"Command {command_filter} not found in JSON entries")
             
     def stop_read_thread(self):
         """Call this method to stop the serial reading thread."""
