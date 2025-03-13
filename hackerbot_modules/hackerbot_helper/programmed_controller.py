@@ -4,7 +4,7 @@ import logging
 import json
 
 class ProgrammedController(MainController):
-    def __init__(self, port="/dev/ttyACM0", board="adafruit:samd:adafruit_qt_py_m0", verbose_mode=False):
+    def __init__(self, port="/dev/ttyACM1", board="adafruit:samd:adafruit_qt_py_m0", verbose_mode=False):
         try:
             super().__init__(port, board)
             self.board, self.port = super().get_board_and_port()
