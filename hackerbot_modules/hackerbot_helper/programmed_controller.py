@@ -44,20 +44,33 @@ class ProgrammedController(MainController):
             self.log_error(f"Error in deactivate_machine_mode: {e}")
             return False
 
+    # Get ping response, check if main controller and temperature sensor are attached
     def get_ping(self):
         try:
             self.check_controller_init()
             super().send_raw_command("PING")
-            return True
+            time.sleep(1)
+            response = super().get_json_from_command("ping")
+            main_controller_attached = response.get("main_controller") == "attached"
+            temperature_sensor_attached = response.get("temperature_sensor") == "attached"
+
+            if not main_controller_attached:
+                raise Exception("Main controller not attached")
+            if not temperature_sensor_attached:
+                raise Exception("Temperature sensor not attached")
+
+            return "Main controller and temperature sensor attached"
         except Exception as e:
             self.log_error(f"Error in get_ping: {e}")
-            return False
+            return None
 
     def get_versions(self):
         try:
             self.check_controller_init()
             super().send_raw_command("VERSION")
-            return True
+            time.sleep(1)
+            response = super().get_json_from_command("version")
+            return f"Main controller version: {response.get('main_controller')}"
         except Exception as e:
             self.log_error(f"Error in get_versions: {e}")
             return False

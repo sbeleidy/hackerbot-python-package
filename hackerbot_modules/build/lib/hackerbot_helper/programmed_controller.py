@@ -48,10 +48,19 @@ class ProgrammedController(MainController):
         try:
             self.check_controller_init()
             super().send_raw_command("PING")
-            return True
+            time.sleep(1)
+            response = super().get_json_from_command("ping")
+            main_controller_attached = response.get("main_controller") == "attached"
+            temperature_sensor_attached = response.get("temperature_sensor") == "attached"
+            if not main_controller_attached:
+                raise Exception("Main controller not attached")
+            if not temperature_sensor_attached:
+                raise Exception("Temperature sensor not attached")
+
+            return "Main controller and temperature sensor attached"
         except Exception as e:
             self.log_error(f"Error in get_ping: {e}")
-            return False
+            return None
 
     def get_versions(self):
         try:

@@ -3,26 +3,27 @@ import time
 
 def main():
     try:
-        controller = hhp.ProgrammedController(verbose_mode=True)    
+        robot = hhp.ProgrammedController(verbose_mode=True)    
         time.sleep(1)
         print("Initializing driver...")
-        controller.init_driver()
-        time.sleep(1)
-        print("Activating machine mode...")
-        controller.activate_machine_mode()
-        time.sleep(1)
-        print("Getting map list...")
-        map_list = controller.get_map_list()
-        print("Map list:", map_list)
-        time.sleep(1)
-        print("Getting map...")
-        map_data = controller.get_map(map_list[0])
-        print("Map data:", map_data)
-        time.sleep(1)
+        robot.init_driver()
+        print(robot.get_ping())
+        # time.sleep(1)
+        # print("Activating machine mode...")
+        # robot.activate_machine_mode()
+        # time.sleep(1)
+        # print("Getting map list...")
+        # map_list = robot.get_map_list()
+        # print("Map list:", map_list)
+        # time.sleep(1)
+        # print("Getting map...")
+        # map_data = robot.get_map(map_list[0])
+        # print("Map data:", map_data)
+        # time.sleep(1)
     except Exception as e:
         print(e)
     finally:
-        controller.destroy()
+        robot.destroy()
 
 
 if __name__ == "__main__":
