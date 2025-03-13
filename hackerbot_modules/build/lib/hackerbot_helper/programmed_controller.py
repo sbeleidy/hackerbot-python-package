@@ -4,7 +4,7 @@ import logging
 import json
 
 class ProgrammedController(MainController):
-    def __init__(self, port="/dev/ttyACM0", board="adafruit:samd:adafruit_qt_py_m0"):
+    def __init__(self, port="/dev/ttyACM0", board="adafruit:samd:adafruit_qt_py_m0", verbose_mode=False):
         try:
             super().__init__(port, board)
             self.board, self.port = super().get_board_and_port()
@@ -13,6 +13,7 @@ class ProgrammedController(MainController):
             self.machine_mode = False
 
             self.error_message = ""
+            self.verbose_mode = verbose_mode
         except Exception as e:
             self.error_message = f"Error initializing ProgrammedController: {e}"
             logging.error(f"Error initializing ProgrammedController: {e}")
@@ -24,9 +25,7 @@ class ProgrammedController(MainController):
             self.check_controller_init()
             super().send_raw_command("MACHINE, 1")
             time.sleep(2)
-            response = super().get_latest_json_entry("machine")
-            if not response.get("success") == "true":
-                raise Exception("Fail to fetch...")
+            response = super().get_json_from_command("machine")
             
             self.machine_mode = True
             return True
@@ -143,10 +142,8 @@ class ProgrammedController(MainController):
             super().send_raw_command(command)
             time.sleep(5)  # Wait for map to be generated
 
-            map_data_json = super().get_latest_json_entry("getmap")
-            if map_data_json.get("success") == "true":
-                return map_data_json.get("compressedmapdata")
-            return None
+            map_data_json = super().get_json_from_command("getmap")
+            return map_data_json.get("compressedmapdata")
         except Exception as e:
             self.log_error(f"Error in get_map: {e}")
             return None
@@ -160,10 +157,8 @@ class ProgrammedController(MainController):
             self.check_machine_mode()
             super().send_raw_command("GETML")
             time.sleep(2)  # Wait for map list to be generated
-            map_list_json = super().get_latest_json_entry("getml")
-            if map_list_json.get("success") == "true":
-                return map_list_json.get("map_ids")
-            return None
+            map_list_json = super().get_json_from_command("getml")
+            return map_list_json.get("map_ids")
         except Exception as e:
             self.log_error(f"Error in get_map_list: {e}")
             return None
@@ -176,6 +171,8 @@ class ProgrammedController(MainController):
         return self.error_message
 
     def log_error(self, error):
+        if self.verbose_mode:
+            print(error)
         logging.error(error)
         self.error_message = error
 

@@ -1,8 +1,8 @@
 import serial
 import threading
 import os
-import re
 import json
+from collections import deque
 
 class MainController:
     HOME_DIR = os.environ['HOME']
@@ -18,7 +18,7 @@ class MainController:
         self.state = None
         self.ser_error = None
 
-        self.latest_json_entry = None  # Variable to store the latest JSON entry
+        self.json_entries = deque(maxlen=10)  # Store up to 10 most recent JSON entries
 
         try:
             self.ser = serial.Serial(port=port, baudrate=baudrate, timeout=1)
@@ -74,9 +74,7 @@ class MainController:
                             # Try to parse the response as JSON
                             try:
                                 json_entry = json.loads(response)
-                                self.latest_json_entry = json_entry  # Store the latest JSON entry
-                                # print(self.latest_json_entry)  # Print the latest JSON entry
-                                # Optionally, log the JSON entry to the file as well
+                                self.json_entries.append(json_entry)  # Store the latest JSON entry
                                 with self.lock:
                                     with open(self.LOG_FILE_PATH, 'a') as file:
                                         file.write(response + "\n")
@@ -93,38 +91,19 @@ class MainController:
         except Exception as e:
             self.ser_error = f"File write error: {e}"
             # raise IOError(f"File write error: {e}")
-    
-    def extract_map_id_from_log(self):
-        try:
-            # Read the log file
-            with open(self.LOG_FILE_PATH, 'r') as file:
-                log_data = file.read()
-            
-            # Pattern to match multiple get_map_list_frame sequences and capture received data
-            pattern = r"INFO: Sending get_map_list_frame\s+INFO: Transmitted.*?\s+INFO: Received\s+((?:(?:[0-9A-F]{2}\s+)+)(?:[0-9A-F]{2}))\s+\(\d+\)"
 
-            matches = re.findall(pattern, log_data, re.DOTALL)
-            if not matches:
-                print("No get_map_list_frame sequences found in the log")
-                return []
+    def get_json_from_command(self, command_filter=None):
+        if command_filter is None:
+            raise ValueError("command_filter cannot be None")
+        if self.json_entries is None or len(self.json_entries) == 0:
+            raise ValueError("No JSON entries found")
+        
+        for entry in reversed(self.json_entries):
+            if entry.get("command") == command_filter:
+                if entry.get("success") == "true":
+                    return entry
+                raise Exception("Fail to fetch...")
             
-            map_ids = []
-            
-            for hex_data in matches:
-                hex_values = hex_data.split()
-                if len(hex_values) >= 9:
-                    # Extract the 8th hex value (zero-indexed)
-                    map_id_hex = hex_values[8]
-                    # Convert hex to integer
-                    map_id = int(map_id_hex, 16)
-                    map_ids.append(map_id)
-            
-            return map_ids
-
-        except Exception as e:
-            print(f"Error extracting map IDs: {str(e)}")
-            return []
-
     def stop_read_thread(self):
         """Call this method to stop the serial reading thread."""
         self.read_thread_stop_event.set()
@@ -137,6 +116,3 @@ class MainController:
                 self.ser.close()
             except serial.SerialException as e:
                 raise ConnectionError(f"Error closing serial connection: {e}")
-
-    def get_latest_json_entry(self, command_filter=None):
-        return self.latest_json_entry
