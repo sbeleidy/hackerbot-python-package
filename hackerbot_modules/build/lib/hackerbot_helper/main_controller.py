@@ -6,8 +6,8 @@ import re
 class MainController:
     HOME_DIR = os.environ['HOME']
 
-    LOG_FILE_PATH = os.path.join(HOME_DIR, "hackerbot_logs/serial_log.txt")
-    MAP_DATA_PATH = os.path.join(HOME_DIR, "hackerbot_maps/map_{map_id}.txt")
+    LOG_FILE_PATH = os.path.join(HOME_DIR, "hackerbot/logs/serial_log.txt")
+    MAP_DATA_PATH = os.path.join(HOME_DIR, "hackerbot/logs/map_{map_id}.txt")
 
     def __init__(self, port="/dev/ttyACM0", board="adafruit:samd:adafruit_qt_py_m0", baudrate=230400):
         self.port = port
