@@ -2,6 +2,7 @@ import serial
 import threading
 import os
 import re
+import json
 
 class MainController:
     HOME_DIR = os.environ['HOME']
@@ -17,6 +18,8 @@ class MainController:
         self.state = None
         self.ser_error = None
 
+        self.latest_json_entry = None  # Variable to store the latest JSON entry
+
         try:
             self.ser = serial.Serial(port=port, baudrate=baudrate, timeout=1)
         except serial.SerialException as e:
@@ -25,6 +28,7 @@ class MainController:
             raise RuntimeError(f"Unexpected error initializing serial connection: {e}")
         
         self.read_thread_stop_event = threading.Event()
+        self.lock = threading.Lock()  # Shared lock for thread safety
         self.read_thread = threading.Thread(target=self.read_serial)
         self.read_thread.daemon = False
         self.read_thread.start()
@@ -58,63 +62,37 @@ class MainController:
             # raise PermissionError(f"Cannot write to {self.LOG_FILE_PATH}")
 
         try:
-            with open(self.LOG_FILE_PATH, 'w') as file:
-                while not self.read_thread_stop_event.is_set():  # Check the stop event to exit the loop
-                    try:
-                        if not self.ser.is_open:
-                            self.ser_error = "Serial port is closed or unavailable!"
-                            # raise ConnectionError("Serial port is closed or unavailable!")
-                        
-                        if self.ser.in_waiting > 0:
-                            response = self.ser.readline().decode('utf-8').strip()
-                            if response:
-                                # print(response)
-                                file.write(response + "\n")
-                                file.flush()
-                    except serial.SerialException as e:
-                        self.ser_error = f"Serial read error: {e}"
-                        # raise IOError(f"Serial read error: {e}")
-                    except Exception as e:
-                        self.ser_error = f"Unexpected read error: {e}"
-                        # raise RuntimeError(f"Unexpected read error: {e}")
+            while not self.read_thread_stop_event.is_set():  # Check the stop event to exit the loop
+                try:
+                    if not self.ser.is_open:
+                        self.ser_error = "Serial port is closed or unavailable!"
+                        # raise ConnectionError("Serial port is closed or unavailable!")
+                    
+                    if self.ser.in_waiting > 0:
+                        response = self.ser.readline().decode('utf-8').strip()
+                        if response:
+                            # Try to parse the response as JSON
+                            try:
+                                json_entry = json.loads(response)
+                                self.latest_json_entry = json_entry  # Store the latest JSON entry
+                                # print(self.latest_json_entry)  # Print the latest JSON entry
+                                # Optionally, log the JSON entry to the file as well
+                                with self.lock:
+                                    with open(self.LOG_FILE_PATH, 'a') as file:
+                                        file.write(response + "\n")
+                                        file.flush()
+                            except json.JSONDecodeError:
+                                # If it's not a valid JSON entry, just continue
+                                continue
+                except serial.SerialException as e:
+                    self.ser_error = f"Serial read error: {e}"
+                    # raise IOError(f"Serial read error: {e}")
+                except Exception as e:
+                    self.ser_error = f"Unexpected read error: {e}"
+                    # raise RuntimeError(f"Unexpected read error: {e}")
         except Exception as e:
             self.ser_error = f"File write error: {e}"
             # raise IOError(f"File write error: {e}")
-
-    def request_map(self, map_id):
-        """Request a map from the device and handle the transfer."""
-        # Send GET_MAP command
-        command = f"GET_MAP {map_id}\r\n"
-        self.send_raw_command(command)
-
-    def parse_map_data(self, map_id):
-        # Create a list to store the map data
-        map_data = []
-        
-        # Read the log file
-        with open(self.LOG_FILE_PATH, 'r') as file:
-            log_data = file.read()
-
-        # Regular expression to extract the map data
-        pattern = r"([A-F0-9]{10,})"
-
-        # Find all occurrences of the map data
-        matches = re.findall(pattern, log_data)
-
-        # Print all the matches
-        for match in matches:
-            # Clean up the match by removing any unnecessary spaces
-            cleaned_data = match.replace(" ", "")
-            # print(cleaned_data)
-            map_data.append(cleaned_data)
-
-        # Write to the map data file
-        with open(self.MAP_DATA_PATH.format(map_id=map_id), 'w') as file:
-            for match in matches:
-                file.write(match + '\n')
-        
-        # Return the map data
-        return map_data
     
     def extract_map_id_from_log(self):
         try:
@@ -153,8 +131,12 @@ class MainController:
         self.read_thread.join()  # Wait for the thread to fully terminate
 
     def disconnect_serial(self):
+        self.stop_read_thread()  # Ensure the thread stops first
         if self.ser:
             try:
                 self.ser.close()
             except serial.SerialException as e:
                 raise ConnectionError(f"Error closing serial connection: {e}")
+
+    def get_latest_json_entry(self, command_filter=None):
+        return self.latest_json_entry
