@@ -9,9 +9,7 @@ def main():
         controller.init_driver()
         time.sleep(1)
         print("Activating machine mode...")
-        response = controller.activate_machine_mode()
-        if not response:
-            raise Exception("Machine mode activation failed")
+        controller.activate_machine_mode()
         time.sleep(1)
         print("Getting map list...")
         map_list = controller.get_map_list()
