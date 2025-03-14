@@ -1,22 +1,24 @@
 from .main_controller import MainController
 import time
 import logging
-import json
 
 class ProgrammedController(MainController):
-    def __init__(self, port="/dev/ttyACM1", board="adafruit:samd:adafruit_qt_py_m0", verbose_mode=False):
+    def __init__(self, port=None, board=None, verbose_mode=False):
         try:
-            super().__init__(port, board)
+            if port is None or board is None:
+                super().__init__()
+            else:
+                super().__init__(port, board)
             self.board, self.port = super().get_board_and_port()
             self.controller_initialized = True
             self.driver_initialized = False
             self.machine_mode = False
 
-            self.error_message = ""
-            self.verbose_mode = verbose_mode
+            self.error_msg = ""
+            self.warning_msg = ""
+            self.v_mode = verbose_mode
         except Exception as e:
-            self.error_message = f"Error initializing ProgrammedController: {e}"
-            logging.error(f"Error initializing ProgrammedController: {e}")
+            self.log_error(f"Error initializing ProgrammedController: {e}")
             self.controller_initialized = False
 
     # Get ping response, check if main controller and temperature sensor are attached
@@ -201,14 +203,20 @@ class ProgrammedController(MainController):
         return super().get_state()
     
     def get_error(self):
-        self.error_message = super().get_ser_error()
-        return self.error_message
+        self.error_msg = super().get_ser_error()
+        return self.error_msg
 
     def log_error(self, error):
-        if self.verbose_mode:
-            print(error)
+        if self.v_mode:
+            print("ERROR: ", error)
         logging.error(error)
-        self.error_message = error
+        self.error_msg = error
+
+    def log_warning(self, warning):
+        if self.v_mode:
+            print("WARNING: ", warning)
+        logging.warning(warning)
+        self.warning_msg = warning
 
     def check_driver_init(self):
         if not self.driver_initialized:
