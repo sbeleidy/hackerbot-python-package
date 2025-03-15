@@ -7,19 +7,22 @@ class ProgrammedController(MainController):
         self.error_msg = ""
         self.warning_msg = ""
         self.v_mode = verbose_mode
+        self.controller_initialized = False  # Ensure this is set before exception handling
+        self.driver_initialized = False
+        self.machine_mode = False
+        self.board = board
+        self.port = port
+
         try:
-            if port is None or board is None:
+            if self.port is None or self.board is None:
                 super().__init__()
             else:
                 super().__init__(port, board)
             self.board, self.port = super().get_board_and_port()
             self.controller_initialized = True
-            self.driver_initialized = False
-            self.machine_mode = False
 
         except Exception as e:
             self.log_error(f"Error initializing ProgrammedController: {e}")
-            self.controller_initialized = False
 
     # Get ping response, check if main controller and temperature sensor are attached
     def get_ping(self):
@@ -203,8 +206,11 @@ class ProgrammedController(MainController):
         return super().get_state()
     
     def get_error(self):
-        self.error_msg = super().get_ser_error()
-        return self.error_msg
+        # Serial error should be priority
+        if super().get_ser_error() is not None:
+            return super().get_ser_error()
+        else:
+            return self.error_msg
 
     def log_error(self, error):
         if self.v_mode:
