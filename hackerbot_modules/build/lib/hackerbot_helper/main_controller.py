@@ -46,7 +46,7 @@ class MainController:
                 # print(port.device)
                 return port.device 
             
-        raise ConnectionError("No Adafruit port found, are you using a different board?")
+        raise ConnectionError("No QT Py port found, are you using a different board?")
 
     def get_board_and_port(self):
         return self.board, self.port
