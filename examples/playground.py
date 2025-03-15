@@ -3,7 +3,8 @@ import time
 
 def main():
     try:
-        robot = hhp.ProgrammedController(verbose_mode=True)    
+        # robot = hhp.ProgrammedController(port="/dev/ttyACM1", board="adafruit:samd:adafruit_qt_py_m0", verbose_mode=True)  
+        robot = hhp.ProgrammedController(verbose_mode=True)      
         time.sleep(1)
         print("Initializing driver...")
         robot.init_driver()

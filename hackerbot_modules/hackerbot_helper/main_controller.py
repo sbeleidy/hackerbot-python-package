@@ -1,4 +1,5 @@
 import serial
+import serial.tools.list_ports
 import threading
 import os
 import json
@@ -10,7 +11,7 @@ class MainController:
     LOG_FILE_PATH = os.path.join(HOME_DIR, "hackerbot/logs/serial_log.txt")
     MAP_DATA_PATH = os.path.join(HOME_DIR, "hackerbot/logs/map_{map_id}.txt")
 
-    def __init__(self, port="/dev/ttyACM1", board="adafruit:samd:adafruit_qt_py_m0", baudrate=230400):
+    def __init__(self, port=None, board="adafruit:samd:adafruit_qt_py_m0", baudrate=230400):
         self.port = port
         self.board = board
         self.baudrate = baudrate
@@ -21,17 +22,31 @@ class MainController:
         self.json_entries = deque(maxlen=10)  # Store up to 10 most recent JSON entries
 
         try:
-            self.ser = serial.Serial(port=port, baudrate=baudrate, timeout=1)
+            if self.port is None:
+                self.port = self.find_port()
+            self.ser = serial.Serial(port=self.port, baudrate=baudrate, timeout=1)
+        except ConnectionError as e:
+            raise ConnectionError(f"Error initializing main controller: {e}")
         except serial.SerialException as e:
-            raise ConnectionError(f"Unable to open serial port {port}. {e}")
+            raise ConnectionError(f"Serial connection error: {port}. {e}")
         except Exception as e:
-            raise RuntimeError(f"Unexpected error initializing serial connection: {e}")
+            raise RuntimeError(f"Error initializing main controller: {e}")
         
         self.read_thread_stop_event = threading.Event()
         self.lock = threading.Lock()  # Shared lock for thread safety
         self.read_thread = threading.Thread(target=self.read_serial)
         self.read_thread.daemon = False
         self.read_thread.start()
+
+    def find_port(self):
+        ports = list(serial.tools.list_ports.comports())
+        for port in ports:
+            # print(port)
+            if "QT Py" in port.description:
+                # print(port.device)
+                return port.device 
+            
+        raise ConnectionError("No Adafruit port found, are you using a different board?")
 
     def get_board_and_port(self):
         return self.board, self.port

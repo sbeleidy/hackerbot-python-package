@@ -4,6 +4,9 @@ import logging
 
 class ProgrammedController(MainController):
     def __init__(self, port=None, board=None, verbose_mode=False):
+        self.error_msg = ""
+        self.warning_msg = ""
+        self.v_mode = verbose_mode
         try:
             if port is None or board is None:
                 super().__init__()
@@ -14,9 +17,6 @@ class ProgrammedController(MainController):
             self.driver_initialized = False
             self.machine_mode = False
 
-            self.error_msg = ""
-            self.warning_msg = ""
-            self.v_mode = verbose_mode
         except Exception as e:
             self.log_error(f"Error initializing ProgrammedController: {e}")
             self.controller_initialized = False
