@@ -100,53 +100,64 @@ class TestMainController(unittest.TestCase):
 
 ##### READ SERIAL TESTS
 
-    # @patch('serial.Serial')
-    # def test_disconnect_serial(self, mock_serial):
-    #     mock_serial.return_value.is_open = True
-    #     mock_serial.return_value.close = MagicMock()
-    #     controller = MainController(port='/dev/ttyUSB0')
-    #     controller.disconnect_serial()
-    #     mock_serial.return_value.close.assert_called_once()
+    @patch('serial.Serial')
+    def test_disconnect_serial(self, mock_serial):
+        mock_serial.return_value.is_open = True
+        mock_serial.return_value.close = MagicMock()
+        controller = MainController(port='/dev/ttyUSB0')
+        controller.disconnect_serial()
+        mock_serial.return_value.close.assert_called_once()
     
-    # @patch('builtins.open', new_callable=mock_open)
-    # @patch('serial.Serial')
-    # def test_read_serial_logs_json(self, mock_serial, mock_file):
-    #     mock_serial.return_value.is_open = True
-    #     mock_serial.return_value.in_waiting = 1
-    #     mock_serial.return_value.readline = MagicMock(return_value=b'{"command": "MOVE", "success": "true"}\n')
-        
-    #     controller = MainController(port='/dev/ttyUSB0')
-    #     controller.read_thread_stop_event.set()  # Stop thread immediately
-    #     controller.read_thread.join()
-        
-    #     mock_file().write.assert_called_with('{"command": "MOVE", "success": "true"}\n')
     
-    # @patch('os.access', return_value=False)
-    # def test_read_serial_permission_error(self, mock_access):
-    #     controller = MainController()
-    #     # Let the thread run briefly
-    #     time.sleep(0.5)
-        
-    #     # Stop the thread and clean up
-    #     controller.stop_read_thread()
-        
-    #     # Now check if the permission error message was set
-    #     self.assertEqual(controller.get_ser_error(), f"Cannot write to {controller.LOG_FILE_PATH}")
+    # Test that read_serial correctly logs JSON responses to a file and parses them for the controller's state.
+    @patch('builtins.open', new_callable=mock_open)
+    @patch('serial.Serial')
+    @patch('os.access', return_value=True)  # Mock file permission check
+    def test_read_serial_logs_json(self, mock_os_access, mock_serial, mock_file):
+        # Mock serial port behavior
+        mock_serial.return_value.is_open = True
+        mock_serial.return_value.in_waiting = 1
+        mock_serial.return_value.readline = MagicMock(return_value=b'{"command": "MOVE", "success": "true"}\n')
+
+        # Create controller instance
+        controller = MainController(port='/dev/ttyUSB0')
+        controller.LOG_FILE_PATH = "/mock/path/log.txt"  # Set a mock path
+        controller.read_thread_stop_event.set()  # Stop thread immediately
+        controller.read_serial()  # Call the function directly
+
+        # Verify JSON was parsed and stored
+        expected_entry = {"command": "MOVE", "success": "true"}
+        self.assertIn(expected_entry, controller.json_entries)
+
+        # Verify log file write
+        mock_file().write.assert_called_with('{"command": "MOVE", "success": "true"}\n')
+
+    
+    # Test that the read_serial method sets the correct error message when it has insufficient permissions to write to the log file.
+    @patch('os.access', return_value=False)
+    def test_read_serial_permission_error(self, mock_access):
+        controller = MainController()
+        # Let the thread run briefly
+        time.sleep(0.5)
+        # Stop the thread and clean up
+        controller.stop_read_thread()
+        # Now check if the permission error message was set
+        self.assertEqual(controller.get_ser_error(), f"Cannot write to {controller.LOG_FILE_PATH}")
 
 ##### THREAD TESTS
 
-    # def test_thread_safety(self):
-    #     controller = MainController()
-    #     with controller.lock:
-    #         controller.state = "LOCKED_TEST"
-    #     self.assertEqual(controller.get_state(), "LOCKED_TEST")
+    def test_thread_safety(self):
+        controller = MainController()
+        with controller.lock:
+            controller.state = "LOCKED_TEST"
+        self.assertEqual(controller.get_state(), "LOCKED_TEST")
     
-    # @patch('serial.Serial')
-    # def test_stop_read_thread(self, mock_serial):
-    #     controller = MainController(port='/dev/ttyUSB0')
-    #     controller.stop_read_thread()
-    #     self.assertTrue(controller.read_thread_stop_event.is_set())
-    #     self.assertFalse(controller.read_thread.is_alive())
+    @patch('serial.Serial')
+    def test_stop_read_thread(self, mock_serial):
+        controller = MainController(port='/dev/ttyUSB0')
+        controller.stop_read_thread()
+        self.assertTrue(controller.read_thread_stop_event.is_set())
+        self.assertFalse(controller.read_thread.is_alive())
 
 if __name__ == '__main__':
     unittest.main()
