@@ -10,15 +10,15 @@ class ProgrammedController(MainController):
         self.controller_initialized = False  # Ensure this is set before exception handling
         self.driver_initialized = False
         self.machine_mode = False
-        self.board = board
         self.port = port
+        self.board = board
 
         try:
             if self.port is None or self.board is None:
                 super().__init__()
+                self.board, self.port = super().get_board_and_port()
             else:
                 super().__init__(port, board)
-            self.board, self.port = super().get_board_and_port()
             self.controller_initialized = True
 
         except Exception as e:
@@ -31,6 +31,10 @@ class ProgrammedController(MainController):
             super().send_raw_command("PING")
             time.sleep(1)
             response = super().get_json_from_command("ping")
+            if response is None:
+                raise Exception("No response from main controller")
+            # print(response.get("main_controller"))
+            # print(response.get("temperature_sensor"))
             main_controller_attached = response.get("main_controller") == "attached"
             temperature_sensor_attached = response.get("temperature_sensor") == "attached"
 

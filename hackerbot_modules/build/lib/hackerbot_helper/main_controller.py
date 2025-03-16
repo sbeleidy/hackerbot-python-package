@@ -11,6 +11,7 @@ class MainController:
     LOG_FILE_PATH = os.path.join(HOME_DIR, "hackerbot/logs/serial_log.txt")
     MAP_DATA_PATH = os.path.join(HOME_DIR, "hackerbot/logs/map_{map_id}.txt")
 
+    # port = '/dev/ttyACM1'
     def __init__(self, port=None, board="adafruit:samd:adafruit_qt_py_m0", baudrate=230400):
         self.port = port
         self.board = board
