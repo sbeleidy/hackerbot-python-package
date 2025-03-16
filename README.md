@@ -33,6 +33,13 @@ Once installed, you can import `hackerbot_helper` in your Python scripts:
 import hackerbot_helper
 ```
 
+### 4. Testing
+To run the unit tests run:
+```bash
+cd hackerbot_modules/test
+python -m unittest discover
+```
+
 ## Troubleshooting
 If you run into issues with the installation, try the following:
 - Ensure you're using a virtual environment:  
