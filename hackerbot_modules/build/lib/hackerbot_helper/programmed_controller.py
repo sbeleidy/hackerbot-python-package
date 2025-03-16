@@ -7,19 +7,22 @@ class ProgrammedController(MainController):
         self.error_msg = ""
         self.warning_msg = ""
         self.v_mode = verbose_mode
+        self.controller_initialized = False  # Ensure this is set before exception handling
+        self.driver_initialized = False
+        self.machine_mode = False
+        self.port = port
+        self.board = board
+
         try:
-            if port is None or board is None:
+            if self.port is None or self.board is None:
                 super().__init__()
+                self.board, self.port = super().get_board_and_port()
             else:
                 super().__init__(port, board)
-            self.board, self.port = super().get_board_and_port()
             self.controller_initialized = True
-            self.driver_initialized = False
-            self.machine_mode = False
 
         except Exception as e:
             self.log_error(f"Error initializing ProgrammedController: {e}")
-            self.controller_initialized = False
 
     # Get ping response, check if main controller and temperature sensor are attached
     def get_ping(self):
@@ -28,6 +31,10 @@ class ProgrammedController(MainController):
             super().send_raw_command("PING")
             time.sleep(1)
             response = super().get_json_from_command("ping")
+            if response is None:
+                raise Exception("No response from main controller")
+            # print(response.get("main_controller"))
+            # print(response.get("temperature_sensor"))
             main_controller_attached = response.get("main_controller") == "attached"
             temperature_sensor_attached = response.get("temperature_sensor") == "attached"
 
@@ -48,10 +55,14 @@ class ProgrammedController(MainController):
             super().send_raw_command("VERSION")
             time.sleep(1)
             response = super().get_json_from_command("version")
+            if response is None:
+                raise Exception("No response from main controller")
+            if not response.get("main_controller")=="v7":
+                raise Exception("Main controller version is not v7, please update firmware!")
             return f"Main controller version: {response.get('main_controller')}"
         except Exception as e:
             self.log_error(f"Error in get_versions: {e}")
-            return False
+            return None
 
     # Activate machine mode
     def activate_machine_mode(self):
@@ -61,6 +72,8 @@ class ProgrammedController(MainController):
             super().send_raw_command("MACHINE, 1")
             time.sleep(1)
             response = super().get_json_from_command("machine")
+            if response is None:
+                raise Exception("Machine mode activation failed")
             self.machine_mode = True
             return True
         except Exception as e:
@@ -72,6 +85,7 @@ class ProgrammedController(MainController):
         try:
             self.check_system()
             super().send_raw_command("MACHINE, 0")
+            self.machine_mode = False
             # Not fetching json response since machine mode is deactivated
             return True
         except Exception as e:
@@ -85,6 +99,8 @@ class ProgrammedController(MainController):
             super().send_raw_command(f"TOFS, 1")
             time.sleep(1)
             response = super().get_json_from_command("tofs")
+            if response is None:
+                raise Exception("TOFs activation failed")
             return True
         except Exception as e:
             self.log_error(f"Error in enable TOFs: {e}")
@@ -95,6 +111,8 @@ class ProgrammedController(MainController):
             self.check_system()
             super().send_raw_command(f"TOFS, 0")
             response = super().get_json_from_command("tofs")
+            if response is None:
+                raise Exception("TOFs deactivation failed")
             return True
         except Exception as e:
             self.log_error(f"Error in disable TOFs: {e}")
@@ -113,7 +131,7 @@ class ProgrammedController(MainController):
         
     def leave_base(self):
         try:
-            self.check_controller_init()
+            self.check_system()
             super().send_raw_command("ENTER")
             # Not fetching json response since machine mode not implemented
             return True
@@ -123,7 +141,7 @@ class ProgrammedController(MainController):
 
     def stop_driver(self):
         try:
-            self.check_driver_init()
+            self.check_system()
             super().send_raw_command("STOP")
             self.driver_initialized = False
             # Not fetching json response since machine mode not implemented
@@ -134,8 +152,7 @@ class ProgrammedController(MainController):
 
     def quickmap(self):
         try:
-            self.check_controller_init()
-            self.check_driver_init()
+            self.check_system()
             super().send_raw_command("QUICKMAP")
             # Not fetching json response since machine mode not implemented
             return True
@@ -145,7 +162,7 @@ class ProgrammedController(MainController):
 
     def dock(self):
         try:
-            self.check_controller_init()
+            self.check_system()
             super().send_raw_command("DOCK")
             # Not fetching json response since machine mode not implemented
             return True
@@ -155,8 +172,7 @@ class ProgrammedController(MainController):
 
     def goto_pos(self, x_coord, y_coord, angle, speed):
         try:
-            self.check_controller_init()
-            self.check_driver_init()
+            self.check_system()
             command = f"GOTO,{x_coord},{y_coord},{angle},{speed}"
             super().send_raw_command(command)
             # Not fetching json response since machine mode not implemented
@@ -169,14 +185,13 @@ class ProgrammedController(MainController):
     def get_map(self, map_id):
         try:
             # Check if controller and driver are initialized and in machine mode
-            self.check_controller_init()
-            self.check_driver_init()
-            self.check_machine_mode()
+            self.check_system()
             command = f"GETMAP,{map_id}"
             super().send_raw_command(command)
             time.sleep(5)  # Wait for map to be generated
-
             map_data_json = super().get_json_from_command("getmap")
+            if map_data_json is None:
+                raise Exception("No map from main controller")
             return map_data_json.get("compressedmapdata")
         except Exception as e:
             self.log_error(f"Error in get_map: {e}")
@@ -186,12 +201,12 @@ class ProgrammedController(MainController):
     def get_map_list(self):
         try:
             # Check if controller and driver are initialized and in machine mode
-            self.check_controller_init()
-            self.check_driver_init()
-            self.check_machine_mode()
+            self.check_system()
             super().send_raw_command("GETML")
             time.sleep(2)  # Wait for map list to be generated
             map_list_json = super().get_json_from_command("getml")
+            if map_list_json is None:
+                raise Exception("No map list from main controller")
             return map_list_json.get("map_ids")
         except Exception as e:
             self.log_error(f"Error in get_map_list: {e}")
@@ -203,8 +218,11 @@ class ProgrammedController(MainController):
         return super().get_state()
     
     def get_error(self):
-        self.error_msg = super().get_ser_error()
-        return self.error_msg
+        # Serial error should be priority
+        if super().get_ser_error() is not None:
+            return super().get_ser_error()
+        else:
+            return self.error_msg
 
     def log_error(self, error):
         if self.v_mode:
