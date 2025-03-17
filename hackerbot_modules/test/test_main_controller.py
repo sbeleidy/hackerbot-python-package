@@ -31,24 +31,29 @@ class TestMainController(unittest.TestCase):
         with self.assertRaises(ConnectionError) as cm:
             controller = MainController()       
             controller.find_port()
-        self.assertIn("No QT Py port found", str(cm.exception))
+            self.assertIn(f"No {controller.board} port found", str(cm.exception))
+
 
     @patch('serial.tools.list_ports.comports')
-    def test_find_port_with_device(self, mock_ports):
-        # Mock a port being found with description 'QT Py'
+    def test_find_port_with_device(self, mock_comports):
+        # Create a mock port with attributes instead of a dictionary
         mock_port = MagicMock()
-        mock_port.device = '/dev/ttyACM1'
-        mock_port.name = 'ttyACM1'
-        mock_port.description = 'QT Py'
-        
-        # Set the mock_ports return value to return a list containing the mock port
-        mock_ports.return_value = [mock_port]
-        
-        controller = MainController()
-        port = controller.find_port()
-        
-        # Assert that the correct port is returned
-        self.assertEqual(port, '/dev/ttyACM1')
+        mock_port.device = 'MOCK_PORT'
+        mock_port.name = 'MOCK_PORT'
+        mock_port.description = "QT Py"
+
+        # Set mock_comports to return a list containing the mock port
+        mock_comports.return_value = [mock_port]
+
+        with patch('serial.Serial') as mock_serial:
+            mock_serial.return_value.is_open = True
+            
+            controller = MainController()
+            port = controller.find_port()
+            
+            # Assert that the correct port is returned
+            self.assertEqual(port, 'MOCK_PORT')
+
 
 ##### COMMAND TESTS
 

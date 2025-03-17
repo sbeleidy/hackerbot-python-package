@@ -47,7 +47,7 @@ class MainController:
                 # print(port.device)
                 return port.device 
             
-        raise ConnectionError("No QT Py port found, are you using a different board?")
+        raise ConnectionError(f"No Port found for {self.board}, are you using a different board?")
 
     def get_board_and_port(self):
         return self.board, self.port
