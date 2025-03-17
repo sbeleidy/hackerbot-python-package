@@ -11,7 +11,6 @@ def main():
         robot.activate_machine_mode()
         print(robot.get_ping())
         print(robot.get_versions())
-        print(robot.warning_msg)
 
         print("Activating machine mode: ", robot.activate_machine_mode())
         # time.sleep(1)
