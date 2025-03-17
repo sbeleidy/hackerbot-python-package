@@ -57,8 +57,8 @@ class ProgrammedController(MainController):
             response = super().get_json_from_command("version")
             if response is None:
                 raise Exception("No response from main controller")
-            if not response.get("main_controller")=="v7":
-                raise Exception("Main controller version is not v7, please update firmware!")
+            if not response.get("main_controller")==7:
+                raise Exception("Main controller version is not 7, please update firmware!")
             return f"Main controller version: {response.get('main_controller')}"
         except Exception as e:
             self.log_error(f"Error in get_versions: {e}")

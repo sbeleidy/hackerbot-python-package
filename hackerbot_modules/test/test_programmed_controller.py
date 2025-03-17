@@ -52,14 +52,14 @@ class TestProgrammedController(unittest.TestCase):
             self.assertIn("Error in get_ping", controller.error_msg)
         
     def test_get_versions_success(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "v7"}):
+        with patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "7"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
             
             result = controller.get_versions()
         
-            self.assertEqual(result, "Main controller version: v7")
+            self.assertEqual(result, "Main controller version: 7")
         
     def test_get_versions_failure(self):
         with patch.object(MainController, 'get_json_from_command', return_value= {}):
