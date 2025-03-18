@@ -8,16 +8,17 @@ def main():
         time.sleep(1)
         print("Initializing driver...")
         robot.init_driver()
-        robot.activate_machine_mode()
+        print(robot.activate_machine_mode())
         print(robot.get_ping())
         print(robot.get_versions())
-
-        print("Activating machine mode: ", robot.activate_machine_mode())
+        print("Moving head...")
+        robot.move_head(yaw=180, pitch=180, speed=2)
+        # robot.disable_idle_mode()
         # time.sleep(1)
         # print("Getting map list...")
-        map_list = robot.get_map_list()
-        print("Map list:", map_list)
-        time.sleep(1)
+        # map_list = robot.get_map_list()
+        # print("Map list:", map_list)
+        # time.sleep(1)
         # print("Getting map...")
         # map_data = robot.get_map(map_list[0])
         # print("Map data:", map_data)
@@ -26,6 +27,7 @@ def main():
     except Exception as e:
         print(e)
     finally:
+        print("Destroying robot...")
         robot.destroy()
 
 

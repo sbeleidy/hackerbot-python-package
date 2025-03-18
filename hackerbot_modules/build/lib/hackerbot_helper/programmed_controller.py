@@ -12,6 +12,7 @@ class ProgrammedController(MainController):
         self.machine_mode = False
         self.port = port
         self.board = board
+        self.head_control = False
 
         try:
             if self.port is None or self.board is None:
@@ -33,16 +34,25 @@ class ProgrammedController(MainController):
             response = super().get_json_from_command("ping")
             if response is None:
                 raise Exception("No response from main controller")
-            # print(response.get("main_controller"))
-            # print(response.get("temperature_sensor"))
+
             main_controller_attached = response.get("main_controller") == "attached"
             temperature_sensor_attached = response.get("temperature_sensor") == "attached"
+            audio_mouth_eyes_attached = response.get("audio_mouth_eyes") == "attached"
+            dynamixel_controller_attached = response.get("dynamixel_controller") == "attached"
 
             if not main_controller_attached:
                 raise Exception("Main controller not attached")
             if not temperature_sensor_attached:
                 raise Exception("Temperature sensor not attached")
-
+            
+            if not audio_mouth_eyes_attached:
+                self.log_warning("Audio mouth and eyes not attached, Head will not move")
+            elif not dynamixel_controller_attached:
+                self.log_warning("Dynamixel controller not attached, Head will not move")
+            else:
+                self.head_control = True
+                return "Main controller attached, temperature sensor attached, audio mouth and eyes attached, dynamixel controller attached"
+            
             return "Main controller and temperature sensor attached"
         except Exception as e:
             self.log_error(f"Error in get_ping: {e}")
@@ -211,6 +221,53 @@ class ProgrammedController(MainController):
         except Exception as e:
             self.log_error(f"Error in get_map_list: {e}")
             return None
+        
+
+    # // float: yaw (rotation angle between 100.0 and 260.0 degrees - 180.0 is looking straight ahead)
+    # // float: pitch (vertical angle between 150.0 and 250.0 degrees - 180.0 is looking straight ahead)
+    # // Example - "LOOK,180.0,180.0"
+    def move_head(self, yaw, pitch, speed):
+        try:
+            self.check_head_control()
+            super().send_raw_command(f"H_LOOK, {yaw}, {pitch}, {speed}")
+            # Not fetching json response since machine mode not implemented
+            return True
+        except Exception as e:
+            self.log_error(f"Error in move_head: {e}")
+            return False
+        
+    def enable_idle_mode(self):
+        try:
+            self.check_head_control()
+            super().send_raw_command("H_IDLE, 1")
+            # Not fetching json response since machine mode not implemented
+            return True
+        except Exception as e:
+            self.log_error(f"Error in set_idle_mode: {e}")
+            return False
+        
+    def disable_idle_mode(self):
+        try:
+            self.check_head_control()
+            super().send_raw_command("H_IDLE, 0")
+            # Not fetching json response since machine mode not implemented
+            return True
+        except Exception as e:
+            self.log_error(f"Error in set_idle_mode: {e}")
+            return False
+        
+    # float: x (position between -1.0 and 1.0)
+    # float: y (position between -1.0 and 1.0)
+    # // Example - "H_GAZE,-0.8,0.2"
+    def set_gaze(self, x, y):
+        try:
+            self.check_head_control()
+            super().send_raw_command(f"H_GAZE,{x},{y}")
+            # Not fetching json response since machine mode not implemented
+            return True
+        except Exception as e:
+            self.log_error(f"Error in set_gaze: {e}")
+            return False
 
 ################# End of serial command methods #################
 
@@ -247,6 +304,10 @@ class ProgrammedController(MainController):
     def check_machine_mode(self):
         if not self.machine_mode:
             raise Exception("Machine mode needs to be activated before this command. Please activate machine mode first.")
+        
+    def check_head_control(self):
+        if not self.head_control:
+            raise Exception("Head control needs to be activated before this command. Please activate head control first.")
 
     def check_system(self):
         try:

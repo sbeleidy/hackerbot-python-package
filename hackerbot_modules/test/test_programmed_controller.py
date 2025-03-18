@@ -52,7 +52,7 @@ class TestProgrammedController(unittest.TestCase):
             self.assertIn("Error in get_ping", controller.error_msg)
         
     def test_get_versions_success(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "7"}):
+        with patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": 7}):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -247,6 +247,91 @@ class TestProgrammedController(unittest.TestCase):
         
             self.assertIsNone(result)
             self.assertIn("Error in get_map_list", controller.error_msg)
+
+    def test_move_head_success(self):
+        with patch.object(MainController, 'send_raw_command', return_value= None):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.head_control = True
+
+            result = controller.move_head(180, 180, 1)
+            self.assertTrue(result)
+
+    def test_move_head_failure(self):
+        with patch.object(MainController, 'send_raw_command', return_value= None):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.head_control = False
+
+            result = controller.move_head(180, 180, 1)
+            self.assertFalse(result)
+            self.assertIn("Error in move_head", controller.error_msg)
+
+
+    def test_enable_idle_mode_success(self):
+        with patch.object(MainController, 'send_raw_command', return_value= None):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.head_control = True
+
+            result = controller.enable_idle_mode()
+            self.assertTrue(result)
+
+    def test_enable_idle_mode_failure(self):
+        with patch.object(MainController, 'send_raw_command', return_value= None):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.head_control = False
+
+            result = controller.enable_idle_mode()
+            self.assertFalse(result)
+            self.assertIn("Error in set_idle", controller.error_msg)
+
+    def test_disable_idle_mode_success(self):
+        with patch.object(MainController, 'send_raw_command', return_value= None):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.head_control = True
+
+            result = controller.disable_idle_mode()
+            self.assertTrue(result)
+
+    def test_disable_idle_mode_failure(self):
+        with patch.object(MainController, 'send_raw_command', return_value= None):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.head_control = False
+
+            result = controller.disable_idle_mode()
+            self.assertFalse(result)
+            self.assertIn("Error in set_idle", controller.error_msg)
+
+    def test_set_gaze_success(self):
+        with patch.object(MainController, 'send_raw_command', return_value= None):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.head_control = True
+
+            result = controller.set_gaze(0, 0)
+            self.assertTrue(result)
+
+    def test_set_gaze_failure(self):
+        with patch.object(MainController, 'send_raw_command', return_value= None):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.head_control = False
+
+            result = controller.set_gaze(0, 0)
+            self.assertFalse(result)
+            self.assertIn("Error in set_gaze", controller.error_msg)
         
     def test_get_current_action(self):
         with patch.object(MainController, 'get_state', return_value= "ACTION"):
@@ -293,8 +378,6 @@ class TestProgrammedController(unittest.TestCase):
             
             self.assertFalse(result)
             self.assertIn("Error in stop_controller", controller.error_msg)
-    
-
 
 if __name__ == '__main__':
     unittest.main()
