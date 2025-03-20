@@ -12,7 +12,9 @@ def main():
         print(robot.get_ping())
         print(robot.get_versions())
         print("Moving head...")
-        robot.move_head(yaw=180, pitch=180, speed=2)
+        print(robot.move(l_vel=100, a_vel=100))
+        # robot.move_head(yaw=180, pitch=180, speed=2)
+
         # robot.disable_idle_mode()
         # time.sleep(1)
         # print("Getting map list...")
