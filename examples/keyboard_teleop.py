@@ -2,37 +2,76 @@ import hackerbot_helper as hhp
 import time
 import math
 import os
-import sys
-import tty
-import termios
-import select
+
+import sys, tty, termios, atexit
+from select import select
+
+class KBHit:
+  
+  def __init__(self):
+    '''Creates a KBHit object that you can call to do various keyboard things.
+    '''
+    # Save the terminal settings
+    self.fd = sys.stdin.fileno()
+    self.new_term = termios.tcgetattr(self.fd)
+    self.old_term = termios.tcgetattr(self.fd)
+
+    # New terminal setting unbuffered
+    self.new_term[3] = (self.new_term[3] & ~termios.ICANON & ~termios.ECHO)
+    termios.tcsetattr(self.fd, termios.TCSAFLUSH, self.new_term)
+
+    # Support normal-terminal reset at exit
+    atexit.register(self.set_normal_term)
+
+
+  def set_normal_term(self):
+    ''' Resets to normal terminal.  On Windows this is a no-op.
+    '''
+    termios.tcsetattr(self.fd, termios.TCSAFLUSH, self.old_term)
+
+
+  def getch(self):
+    ''' Returns a keyboard character after kbhit() has been called.
+    '''
+    ch1 = sys.stdin.read(1)
+    if ch1 == '\x1b':
+      # special key pressed
+      ch2 = sys.stdin.read(1)
+      ch3 = sys.stdin.read(1)
+      ch = ch1 + ch2 + ch3
+    else:
+      # not a special key
+      ch = ch1
+    while sys.stdin in select([sys.stdin], [], [], 0)[0]:  
+        sys.stdin.read(1)
+    return ch
+
+
+  def kbhit(self):
+    ''' Returns True if keyboard character was hit, False otherwise.
+    '''
+    dr,dw,de = select([sys.stdin], [], [], 0)
+    while sys.stdin in select([sys.stdin], [], [], 0)[0]:  
+        sys.stdin.read(1)
+    return dr != []
 
 class Teleop:
     def __init__(self):
+        self.kb = KBHit()
+
         self.robot = hhp.ProgrammedController()
         self.robot.init_driver()
         self.robot.activate_machine_mode()
         self.robot.leave_base()
-        self.robot.goto_pos(0, 0, 0, 0.1)
-        print("Locating robot...")
-        time.sleep(20)
-        
-        # Initialize position tracking
-        self.current_x = 0.0
-        self.current_y = 0.0
-        self.current_angle = 0.0
-        self.current_speed = 0.0
         
         # Modify movement parameters
-        self.step_size = 0.1  # meters per step for forward/backward
-        self.rotation_step = 0.1  # radians per step for rotation
-        self.max_speed = 1.0
-        
-        # Save terminal settings
-        self.fd = sys.stdin.fileno()
-        self.old_settings = termios.tcgetattr(self.fd)
-        tty.setraw(sys.stdin.fileno())
+        self.step_size = 0.2 # mm
+        self.max_l_step_size = 300.0 # mm/s
+        self.max_r_step_size = 90.0 # degree/s
 
+        self.stop = False
+        self.last_key = None  # Track last keypress
+        
         # Print initial instructions to terminal
         self.print_terminal_instructions()
 
@@ -40,16 +79,10 @@ class Teleop:
         """Cleanup method to properly shut down the robot and restore terminal settings"""
         try:
             # Restore terminal settings
-            termios.tcsetattr(self.fd, termios.TCSADRAIN, self.old_settings)
-            
-            # Stop the robot
-            self.robot.goto_pos(0, 0, 0, 0)
-            time.sleep(1)  # Give it a moment to stop
-            
+            self.kb.set_normal_term()
             # Dock the robot
             self.robot.dock()
-            time.sleep(2)  # Give it time to dock
-            
+            time.sleep(2) 
             # Destroy the robot connection
             self.robot.destroy()
             
@@ -57,7 +90,7 @@ class Teleop:
             print(f"\nError during cleanup: {e}")
             # Try to restore terminal settings even if there's an error
             try:
-                termios.tcsetattr(self.fd, termios.TCSADRAIN, self.old_settings)
+                self.kb.set_normal_term()
             except:
                 pass
 
@@ -70,126 +103,77 @@ class Teleop:
         os.system('clear' if os.name == 'posix' else 'cls')
         print("\n=== Robot Teleop Controls ===\r")
         print("\nMoving controls:\r")
-        print("   i    : forward\r")
-        print("   j    : rotate left\r")
-        print("   k    : stop\r")
-        print("   l    : rotate right\r")
-        print("   ,    : backward\r")
-        print("\nq/z : increase/decrease max speeds by 10%\r")
-        print("s/x : increase/decrease step size by 10%\r")
-        print("d/c : increase/decrease rotation step by 10%\r")
-        print("\nCTRL-C to quit\r")
+        print("   w    : forward\r")
+        print("   a    : rotate left\r")
+        print("   s    : stop\r")
+        print("   d    : rotate right\r")
+        print("   x    : backward\r")
+        print("r/t : increase/decrease step size by 10%\r")
+        print("\nCTRL-C/q to quit\r")
         print(f"\nCurrent step size: {self.step_size:.2f}m\r")
-        print(f"Current rotation step: {math.degrees(self.rotation_step):.1f}°\r")
         print("=" * 30 + "\r")
 
-    def print_position(self):
-        """Print current position to terminal"""
-        print(f"\rPosition: x={self.current_x:.2f}, y={self.current_y:.2f}, angle={math.degrees(self.current_angle):.1f}°", end="", flush=True)
+    def get_command(self):
+        key = None
+        # Read keyboard input
+        if self.kb.kbhit() is not None:
+            key = self.kb.getch()
+            # print(f"key: {key}\r")
+            while sys.stdin in select([sys.stdin], [], [], 0)[0]:  
+                sys.stdin.read(1)
 
-    def read_keyboard_input(self):
-        """Read a single keypress from the terminal"""
-        if select.select([sys.stdin], [], [], 0.0)[0]:
-            key = sys.stdin.read(1)
-            return key
-        return None
+            if key == self.last_key:
+                self.last_key = None
+                return None, None  
 
-    def adjust_speeds(self, key):
-        """Adjust speeds and step sizes based on key press"""
-        if key == 'q':  # Increase max speed
-            self.max_speed *= 1.1
-            print(f"\rMax speed increased to: {self.max_speed:.2f}", end="", flush=True)
-        elif key == 'z':  # Decrease max speed
-            self.max_speed *= 0.9
-            print(f"\rMax speed decreased to: {self.max_speed:.2f}", end="", flush=True)
-        elif key == 's':  # Increase step size
-            self.step_size *= 1.1
-            print(f"\rStep size increased to: {self.step_size:.2f}m", end="", flush=True)
-        elif key == 'x':  # Decrease step size
-            self.step_size *= 0.9
-            print(f"\rStep size decreased to: {self.step_size:.2f}m", end="", flush=True)
-        elif key == 'd':  # Increase rotation step
-            self.rotation_step *= 1.1
-            print(f"\rRotation step increased to: {math.degrees(self.rotation_step):.1f}°", end="", flush=True)
-        elif key == 'c':  # Decrease rotation step
-            self.rotation_step *= 0.9
-            print(f"\rRotation step decreased to: {math.degrees(self.rotation_step):.1f}°", end="", flush=True)
-        return False
+            self.last_key = key  # Update last key
 
-    def process_key(self, key, shift_pressed):
-        """Process keyboard input and return movement values"""
-        dx = 0.0
-        dy = 0.0
-        dangle = 0.0
-        speed = 0.0
+            # Check for quit conditions
+            if key in ['q', 'Q']:  # Check for 'q' or Ctrl-C
+                self.stop = True
+                return None, None
+                
+            if key == 'r':
+                self.step_size += 0.1
+            elif key == 't':
+                self.step_size -= 0.1
 
-        if key is None:
-            return self.current_x, self.current_y, self.current_angle, 0.0
-
-        # Handle speed/step adjustments
-        if key in ['q', 'z', 's', 'x', 'd', 'c']:
-            return self.adjust_speeds(key)
-
-        # Simple movement controls
-        if key == 'i':  # Forward
-            dx = self.step_size
-            speed = self.max_speed
-        elif key == ',':  # Backward
-            dx = -self.step_size
-            speed = self.max_speed
-        elif key == 'j':  # Rotate left
-            dangle = self.rotation_step
-            speed = self.max_speed
-        elif key == 'l':  # Rotate right
-            dangle = -self.rotation_step
-            speed = self.max_speed
-        elif key == 'k':  # Stop
-            speed = 0.0
-
-        # Update position based on current angle and movement
-        if dx != 0:
-            # Convert local movement to global coordinates
-            self.current_x += dx * math.cos(self.current_angle)
-            self.current_y += dx * math.sin(self.current_angle)
-        
-        # Update angle
-        self.current_angle += dangle
-        
-        return self.current_x, self.current_y, self.current_angle, speed
+            if key == 'w':  # Forward
+                l_vel = self.max_l_step_size * self.step_size
+                r_vel = 0.0
+            elif key == 'x':  # Backward
+                l_vel = -self.max_l_step_size * self.step_size
+                r_vel = 0.0
+            elif key == 'a':  # Rotate left
+                l_vel = 0.0
+                r_vel = self.max_r_step_size * self.step_size
+            elif key == 'd':  # Rotate right
+                l_vel = 0.0
+                r_vel = -self.max_r_step_size * self.step_size
+            elif key == 's':  # Stop
+                l_vel = 0.0
+                r_vel = 0.0
+            else:
+                l_vel = None
+                r_vel = None
+            
+            return l_vel, r_vel
+        else:
+            self.last_key = None
+            return 0.0, 0.0
 
     def run(self):
-        rate = 10  # 10 Hz loop rate
-        last_time = time.time()
-        shift_pressed = False
+        while not self.stop:
+            l_vel, r_vel = self.get_command()
+            if l_vel is not None and r_vel is not None:
+                respone = self.robot.move(l_vel, r_vel)
+                if respone == False:
+                    break
+                # print(f"l_vel: {l_vel}, r_vel: {r_vel}\r")
+            l_vel = None
+            r_vel = None
+            time.sleep(0.01)
 
-        while True:
-            # Read keyboard input
-            key = self.read_keyboard_input()
-            
-            # Check for shift key
-            if key == '\x1b':  # ESC sequence
-                next_key = self.read_keyboard_input()
-                if next_key == '[':
-                    next_key = self.read_keyboard_input()
-                    if next_key == 'A':  # Up arrow
-                        shift_pressed = True
-                    elif next_key == 'B':  # Down arrow
-                        shift_pressed = False
-            elif key == 'x':
-                break
-
-            # Process the key and get movement values
-            x, y, angle, speed = self.process_key(key, shift_pressed)
-
-            # Send command to control system
-            self.robot.goto_pos(x, y, angle, speed)
-
-            # Print current position to terminal
-            self.print_position()
-
-            # Wait to match the rate (10 Hz)
-            time.sleep(max(0, (1 / rate) - (time.time() - last_time)))
-            last_time = time.time()
 
 # Main entry point
 if __name__ == '__main__':
