@@ -23,13 +23,11 @@ class Teleop:
         self.current_angle = 0.0
         self.current_speed = 0.0
         
-        # Movement parameters
-        self.linear_step = 0.1  # meters per step
-        self.angular_step = 0.1  # radians per step
+        # Modify movement parameters
+        self.step_size = 0.1  # meters per step for forward/backward
+        self.rotation_step = 0.1  # radians per step for rotation
         self.max_speed = 1.0
-        self.linear_speed = 0.5
-        self.angular_speed = 0.5
-
+        
         # Save terminal settings
         self.fd = sys.stdin.fileno()
         self.old_settings = termios.tcgetattr(self.fd)
@@ -69,25 +67,20 @@ class Teleop:
 
     def print_terminal_instructions(self):
         """Print instructions to the terminal"""
-        os.system('clear' if os.name == 'posix' else 'cls')  # Clear terminal
+        os.system('clear' if os.name == 'posix' else 'cls')
         print("\n=== Robot Teleop Controls ===\r")
-        print("\nMoving around:\r")
-        print("   u    i    o\r")
-        print("   j    k    l\r")
-        print("   m    ,    .\r")
-        print("\nFor Holonomic mode (strafing), hold down the shift key:\r")
-        print("---------------------------\r")
-        print("   U    I    O\r")
-        print("   J    K    L\r")
-        print("   M    <    >\r")
-        print("\nt : up (+z)\r")
-        print("b : down (-z)\r")
-        print("\nanything else : stop\r")
+        print("\nMoving controls:\r")
+        print("   i    : forward\r")
+        print("   j    : rotate left\r")
+        print("   k    : stop\r")
+        print("   l    : rotate right\r")
+        print("   ,    : backward\r")
         print("\nq/z : increase/decrease max speeds by 10%\r")
-        print("w/x : increase/decrease only linear speed by 10%\r")
-        print("e/c : increase/decrease only angular speed by 10%\r")
+        print("s/x : increase/decrease step size by 10%\r")
+        print("d/c : increase/decrease rotation step by 10%\r")
         print("\nCTRL-C to quit\r")
-        print("\nCurrent Position: x=0.0, y=0.0, angle=0.0\r")
+        print(f"\nCurrent step size: {self.step_size:.2f}m\r")
+        print(f"Current rotation step: {math.degrees(self.rotation_step):.1f}°\r")
         print("=" * 30 + "\r")
 
     def print_position(self):
@@ -102,26 +95,26 @@ class Teleop:
         return None
 
     def adjust_speeds(self, key):
-        """Adjust speeds based on key press"""
-        if key == 'q':  # Increase max speed by 10%
+        """Adjust speeds and step sizes based on key press"""
+        if key == 'q':  # Increase max speed
             self.max_speed *= 1.1
             print(f"\rMax speed increased to: {self.max_speed:.2f}", end="", flush=True)
-        elif key == 'z':  # Decrease max speed by 10%
+        elif key == 'z':  # Decrease max speed
             self.max_speed *= 0.9
             print(f"\rMax speed decreased to: {self.max_speed:.2f}", end="", flush=True)
-        elif key == 'w':  # Increase only linear speed by 10%
-            self.linear_speed *= 1.1
-            print(f"\rLinear speed increased to: {self.linear_speed:.2f}", end="", flush=True)
-        elif key == 'x':  # Decrease only linear speed by 10%
-            self.linear_speed *= 0.9
-            print(f"\rLinear speed decreased to: {self.linear_speed:.2f}", end="", flush=True)
-        elif key == 'e':  # Increase only angular speed by 10%
-            self.angular_speed *= 1.1
-            print(f"\rAngular speed increased to: {self.angular_speed:.2f}", end="", flush=True)
-        elif key == 'c':  # Decrease only angular speed by 10%
-            self.angular_speed *= 0.9
-            print(f"\rAngular speed decreased to: {self.angular_speed:.2f}", end="", flush=True)
-        return False  # Return False to indicate no movement command
+        elif key == 's':  # Increase step size
+            self.step_size *= 1.1
+            print(f"\rStep size increased to: {self.step_size:.2f}m", end="", flush=True)
+        elif key == 'x':  # Decrease step size
+            self.step_size *= 0.9
+            print(f"\rStep size decreased to: {self.step_size:.2f}m", end="", flush=True)
+        elif key == 'd':  # Increase rotation step
+            self.rotation_step *= 1.1
+            print(f"\rRotation step increased to: {math.degrees(self.rotation_step):.1f}°", end="", flush=True)
+        elif key == 'c':  # Decrease rotation step
+            self.rotation_step *= 0.9
+            print(f"\rRotation step decreased to: {math.degrees(self.rotation_step):.1f}°", end="", flush=True)
+        return False
 
     def process_key(self, key, shift_pressed):
         """Process keyboard input and return movement values"""
@@ -129,90 +122,35 @@ class Teleop:
         dy = 0.0
         dangle = 0.0
         speed = 0.0
-        z_speed = 0.0
 
         if key is None:
             return self.current_x, self.current_y, self.current_angle, 0.0
 
-        # Handle speed adjustments
-        if key in ['q', 'z', 'w', 'x', 'e', 'c']:
+        # Handle speed/step adjustments
+        if key in ['q', 'z', 's', 'x', 'd', 'c']:
             return self.adjust_speeds(key)
 
-        # Handle z-axis movement
-        if key == 't':
-            z_speed = 0.5
+        # Simple movement controls
+        if key == 'i':  # Forward
+            dx = self.step_size
             speed = self.max_speed
-        elif key == 'b':
-            z_speed = -0.5
+        elif key == ',':  # Backward
+            dx = -self.step_size
             speed = self.max_speed
-        else:
-            # Holonomic controls (shift key pressed for strafing)
-            if shift_pressed:
-                if key == 'u':
-                    dx = self.linear_step
-                    dy = self.linear_step
-                    speed = self.max_speed
-                elif key == 'i':
-                    dx = self.linear_step
-                    speed = self.max_speed
-                elif key == 'o':
-                    dx = self.linear_step
-                    dy = -self.linear_step
-                    speed = self.max_speed
-                elif key == 'j':
-                    dangle = self.angular_step
-                    speed = self.max_speed
-                elif key == 'k':
-                    speed = 0.0
-                elif key == 'l':
-                    dangle = -self.angular_step
-                    speed = self.max_speed
-                elif key == 'm':
-                    dx = -self.linear_step
-                    dy = self.linear_step
-                    speed = self.max_speed
-                elif key == '<':  # Shift + comma
-                    dx = -self.linear_step
-                    speed = self.max_speed
-                elif key == '>':  # Shift + period
-                    dx = -self.linear_step
-                    dy = -self.linear_step
-                    speed = self.max_speed
-            else:
-                if key == 'u':
-                    dx = self.linear_step
-                    speed = self.max_speed
-                elif key == 'i':
-                    dx = self.linear_step
-                    speed = self.max_speed
-                elif key == 'o':
-                    dx = self.linear_step
-                    speed = self.max_speed
-                elif key == 'j':
-                    dangle = self.angular_step
-                    speed = self.max_speed
-                elif key == 'k':
-                    speed = 0.0
-                elif key == 'l':
-                    dangle = -self.angular_step
-                    speed = self.max_speed
-                elif key == 'm':
-                    dx = -self.linear_step
-                    speed = self.max_speed
-                elif key == ',':
-                    dx = -self.linear_step
-                    speed = self.max_speed
-                elif key == '.':
-                    dx = -self.linear_step
-                    speed = self.max_speed
+        elif key == 'j':  # Rotate left
+            dangle = self.rotation_step
+            speed = self.max_speed
+        elif key == 'l':  # Rotate right
+            dangle = -self.rotation_step
+            speed = self.max_speed
+        elif key == 'k':  # Stop
+            speed = 0.0
 
         # Update position based on current angle and movement
-        if dx != 0 or dy != 0:
+        if dx != 0:
             # Convert local movement to global coordinates
-            global_dx = dx * math.cos(self.current_angle) - dy * math.sin(self.current_angle)
-            global_dy = dx * math.sin(self.current_angle) + dy * math.cos(self.current_angle)
-            self.current_x += global_dx
-            self.current_y += global_dy
+            self.current_x += dx * math.cos(self.current_angle)
+            self.current_y += dx * math.sin(self.current_angle)
         
         # Update angle
         self.current_angle += dangle
