@@ -190,6 +190,21 @@ class ProgrammedController(MainController):
         except Exception as e:
             self.log_error(f"Error in goto_pos: {e}")
             return False
+
+    # float: linear_velocity - Unit is mm/s (eg. -50.0 mm/s driving backwards)
+    # float: angular_velocity - Unit is degrees/s (eg. 10 degrees/s)
+    def move(self, l_vel, a_vel):
+        try:
+            self.check_system()
+            super().send_raw_command(f"MOTOR,{l_vel},{a_vel}")
+            time.sleep(1)
+            response = super().get_json_from_command("motor")
+            if response is None:
+                raise Exception("Move command failed")
+            return True
+        except Exception as e:
+            self.log_error(f"Error in move: {e}")
+            return False
     
     # Returns a string of map data
     def get_map(self, map_id):
@@ -221,7 +236,6 @@ class ProgrammedController(MainController):
         except Exception as e:
             self.log_error(f"Error in get_map_list: {e}")
             return None
-        
 
     # // float: yaw (rotation angle between 100.0 and 260.0 degrees - 180.0 is looking straight ahead)
     # // float: pitch (vertical angle between 150.0 and 250.0 degrees - 180.0 is looking straight ahead)
@@ -283,14 +297,14 @@ class ProgrammedController(MainController):
 
     def log_error(self, error):
         if self.v_mode:
-            print("ERROR: ", error)
-        logging.error(error)
+            # print("ERROR: ", error)
+            logging.error(error)
         self.error_msg = error
 
     def log_warning(self, warning):
         if self.v_mode:
-            print("WARNING: ", warning)
-        logging.warning(warning)
+            # print("WARNING: ", warning)
+            logging.warning(warning)
         self.warning_msg = warning
 
     def check_driver_init(self):

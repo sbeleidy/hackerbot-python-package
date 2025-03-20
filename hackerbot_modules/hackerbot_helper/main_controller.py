@@ -42,9 +42,7 @@ class MainController:
     def find_port(self):
         ports = list(serial.tools.list_ports.comports())
         for port in ports:
-            # print(port)
             if "QT Py" in port.description:
-                # print(port.device)
                 return port.device 
             
         raise ConnectionError(f"No Port found for {self.board}, are you using a different board?")

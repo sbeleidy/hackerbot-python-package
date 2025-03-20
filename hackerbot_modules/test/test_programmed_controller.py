@@ -204,7 +204,26 @@ class TestProgrammedController(unittest.TestCase):
 
             result = controller.goto_pos(10, 20, 30, 40)
             self.assertTrue(result)
-        
+
+    def test_move_success(self):
+        with patch.object(MainController, 'get_json_from_command', return_value= {"command": "motor", "success": "true"}):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+
+            result = controller.move(10, 20)
+            self.assertTrue(result)
+
+    def test_move_failure(self):
+        with patch.object(MainController, 'get_json_from_command', return_value= None):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+
+            result = controller.move(10, 20)
+            self.assertFalse(result)
+            self.assertIn("Error in move", controller.error_msg)
+            
     def test_get_map_success(self):
         with patch.object(MainController, 'get_json_from_command', return_value= {"compressedmapdata": "map_data_content", "command": "getmap", "success": "true"}):
             controller = ProgrammedController()
