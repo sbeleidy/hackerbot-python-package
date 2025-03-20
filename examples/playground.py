@@ -11,7 +11,6 @@ def main():
         print(robot.activate_machine_mode())
         print(robot.get_ping())
         print(robot.get_versions())
-        print("Moving head...")
         print(robot.move(l_vel=100, a_vel=100))
         # robot.move_head(yaw=180, pitch=180, speed=2)
 
@@ -27,7 +26,7 @@ def main():
         # time.sleep(1)
         print("Deactivating machine mode: ", robot.deactivate_machine_mode())
     except Exception as e:
-        print(e)
+        print("Error in main: ", e)
     finally:
         print("Destroying robot...")
         robot.destroy()
