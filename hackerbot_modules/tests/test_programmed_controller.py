@@ -23,14 +23,16 @@ class TestProgrammedController(unittest.TestCase):
 
             
     def test_get_ping_success(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached","temperature_sensor": "attached"}):
+        with patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached","temperature_sensor": "attached", "audio_mouth_eyes": "attached", "dynamixel_controller": "attached", "arm_controller": "attached"}):
             controller = ProgrammedController(verbose_mode=True)
             controller.driver_initialized = True
             controller.machine_mode = True
             result = controller.get_ping()
         
-            self.assertEqual(result, "Main controller and temperature sensor attached")
-        
+            self.assertEqual(result, "Main controller attached | Temperature sensor attached | Audio mouth and eyes attached | Dynamixel controller attached | Arm control attached | ")
+            self.assertTrue(controller.head_control)
+            self.assertTrue(controller.arm_control)
+
     def test_get_ping_main_controller_not_attached(self):
         with patch.object(MainController, 'get_json_from_command', return_value= {"temperature_sensor": "attached"}):
             controller = ProgrammedController()
@@ -50,6 +52,40 @@ class TestProgrammedController(unittest.TestCase):
             
             self.assertIsNone(result)
             self.assertIn("Error in get_ping", controller.error_msg)
+
+    def test_get_ping_audio_mouth_eyes_not_attached(self):
+        with patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached", "temperature_sensor": "attached", "dynamixel_controller": "attached", "arm_controller": "attached"}):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.head_control = False
+            result = controller.get_ping()
+
+            self.assertFalse(controller.head_control)
+            self.assertIn("Audio mouth and eyes not attached, Head will not move", controller.warning_msg)
+
+    def test_get_ping_dynamixel_controller_not_attached(self):
+        with patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached", "temperature_sensor": "attached", "audio_mouth_eyes": "attached", "arm_controller": "attached"}):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.head_control = True
+            result = controller.get_ping()
+
+            self.assertFalse(controller.head_control)
+            self.assertIn("Dynamixel controller not attached, Head will not move", controller.warning_msg)
+
+    def test_get_ping_arm_control_not_attached(self):
+        with patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached", "temperature_sensor": "attached", "audio_mouth_eyes": "attached", "dynamixel_controller": "attached"}):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.head_control = True
+            controller.arm_control = False
+            result = controller.get_ping()
+
+            self.assertFalse(controller.arm_control)
+            self.assertIn("Arm control not attached, Arm will not move", controller.warning_msg)
         
     def test_get_versions_success(self):
         with patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": 7}):
@@ -58,7 +94,6 @@ class TestProgrammedController(unittest.TestCase):
             controller.machine_mode = True
             
             result = controller.get_versions()
-        
             self.assertEqual(result, "Main controller version: 7")
         
     def test_get_versions_failure(self):
@@ -267,6 +302,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertIsNone(result)
             self.assertIn("Error in get_map_list", controller.error_msg)
 
+############ TEST HEAD CONTROL ############
+
     def test_move_head_success(self):
         with patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
@@ -351,7 +388,117 @@ class TestProgrammedController(unittest.TestCase):
             result = controller.set_gaze(0, 0)
             self.assertFalse(result)
             self.assertIn("Error in set_gaze", controller.error_msg)
-        
+
+
+############ TEST ARM CONTROL ############
+
+    def test_arm_calibrate_success(self):
+        with patch.object(MainController, 'send_raw_command', return_value= None):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.arm_control = True   
+            
+            result = controller.arm_calibrate()
+            self.assertTrue(result)
+
+    def test_arm_calibrate_failure(self):
+        with patch.object(MainController, 'send_raw_command', return_value= None):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.arm_control = False
+            
+            result = controller.arm_calibrate()
+            self.assertFalse(result)
+            self.assertIn("Error in arm_calibrate", controller.error_msg)
+
+    def test_open_gripper_success(self):
+        with patch.object(MainController, 'send_raw_command', return_value= None):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.arm_control = True
+
+            result = controller.open_gripper()
+            self.assertTrue(result)
+
+    def test_open_gripper_failure(self):
+        with patch.object(MainController, 'send_raw_command', return_value= None):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.arm_control = False
+            
+            result = controller.open_gripper()
+            self.assertFalse(result)
+            self.assertIn("Error in open_gripper", controller.error_msg)
+
+    def test_close_gripper_success(self):
+        with patch.object(MainController, 'send_raw_command', return_value= None):
+            controller = ProgrammedController() 
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.arm_control = True
+
+            result = controller.close_gripper()
+            self.assertTrue(result)
+
+    def test_close_gripper_failure(self):
+        with patch.object(MainController, 'send_raw_command', return_value= None):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.arm_control = False  
+
+            result = controller.close_gripper()
+            self.assertFalse(result)
+            self.assertIn("Error in close_gripper", controller.error_msg)
+
+    def test_move_single_joint_success(self):
+        with patch.object(MainController, 'send_raw_command', return_value= None):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.arm_control = True
+
+            result = controller.move_single_joint(1, 180, 1)
+            self.assertTrue(result)
+
+    def test_move_single_joint_failure(self):
+        with patch.object(MainController, 'send_raw_command', return_value= None):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.arm_control = False  
+
+            result = controller.move_single_joint(1, 180, 1)
+            self.assertFalse(result)
+            self.assertIn("Error in move_single_joint", controller.error_msg)
+
+    def test_move_all_joint_success(self):
+        with patch.object(MainController, 'send_raw_command', return_value= None):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.arm_control = True
+
+            result = controller.move_all_joint(180, 180, 180, 180, 180, 180, 1)
+            self.assertTrue(result)
+
+    def test_move_all_joints_failure(self): 
+        with patch.object(MainController, 'send_raw_command', return_value= None):
+            controller = ProgrammedController()
+            controller.driver_initialized = True
+            controller.machine_mode = True
+            controller.arm_control = False
+
+            result = controller.move_all_joint(180, 180, 180, 180, 180, 180, 1)
+            self.assertFalse(result)
+            self.assertIn("Error in move_all_joints", controller.error_msg)
+
+############ TEST OTHER COMMANDS ############
+
     def test_get_current_action(self):
         with patch.object(MainController, 'get_state', return_value= "ACTION"):
             controller = ProgrammedController()
