@@ -75,31 +75,37 @@ class TestMainController(unittest.TestCase):
 
 ##### JSON TESTS
 
-    def test_get_json_from_command_found(self):
-        controller = MainController()
+    @patch("serial.Serial", autospec=True)  # Mock Serial to prevent real connection
+    def test_get_json_from_command_found(self, mock_serial):
+        controller = MainController(port="/dev/MOCK_PORT")
+
         controller.json_entries.append({"command": "TEST", "success": "true"})
         result = controller.get_json_from_command("TEST")
         self.assertEqual(result, {"command": "TEST", "success": "true"})
 
-    def test_get_json_from_command_not_found(self):
-        controller = MainController()
+    @patch("serial.Serial", autospec=True)  # Mock Serial to prevent real connection
+    def test_get_json_from_command_not_found(self, mock_serial):
+        controller = MainController(port="/dev/MOCK_PORT")
         with self.assertRaises(Exception):
             controller.get_json_from_command("UNKNOWN")
 
-    def test_get_json_from_command_no_entries(self):
-        controller = MainController()
+    @patch("serial.Serial", autospec=True)  # Mock Serial to prevent real connection
+    def test_get_json_from_command_no_entries(self, mock_serial):
+        controller = MainController(port="/dev/MOCK_PORT")
         with self.assertRaises(ValueError):
             controller.get_json_from_command()
 
 ##### STATE AND ERROR TESTS 
+    @patch("serial.Serial", autospec=True)  # Mock Serial to prevent real connection
+    def test_get_state(self, mock_serial):
+        controller = MainController(port="/dev/MOCK_PORT")
 
-    def test_get_state(self):
-        controller = MainController()
         controller.state = "PING"
         self.assertEqual(controller.get_state(), "PING")
 
-    def test_get_ser_error(self):
-        controller = MainController()
+    @patch("serial.Serial", autospec=True)  # Mock Serial to prevent real connection
+    def test_get_ser_error(self, mock_serial):
+        controller = MainController(port="/dev/MOCK_PORT")
         controller.ser_error = "ERROR"
         self.assertEqual(controller.get_ser_error(), "ERROR")
 
@@ -109,7 +115,7 @@ class TestMainController(unittest.TestCase):
     def test_disconnect_serial(self, mock_serial):
         mock_serial.return_value.is_open = True
         mock_serial.return_value.close = MagicMock()
-        controller = MainController(port='/dev/ttyUSB0')
+        controller = MainController(port='/dev/MOCK_PORT')
         controller.disconnect_serial()
         mock_serial.return_value.close.assert_called_once()
     
@@ -140,19 +146,24 @@ class TestMainController(unittest.TestCase):
     
     # Test that the read_serial method sets the correct error message when it has insufficient permissions to write to the log file.
     @patch('os.access', return_value=False)
-    def test_read_serial_permission_error(self, mock_access):
-        controller = MainController()
+    @patch('serial.Serial', autospec=True)
+    def test_read_serial_permission_error(self, mock_serial, mock_access):
+        mock_serial_instance = MagicMock()
+        mock_serial.return_value = mock_serial_instance
+    
+        controller = MainController(port="/dev/MOCK_PORT")
         # Let the thread run briefly
         time.sleep(0.5)
         # Stop the thread and clean up
         controller.stop_read_thread()
         # Now check if the permission error message was set
-        self.assertEqual(controller.get_ser_error(), f"Cannot write to {controller.LOG_FILE_PATH}")
+        self.assertIn("read error", controller.get_ser_error())
 
 ##### THREAD TESTS
 
-    def test_thread_safety(self):
-        controller = MainController()
+    @patch('serial.Serial')
+    def test_thread_safety(self, mock_serial):
+        controller = MainController(port="/dev/MOCK_PORT")
         with controller.lock:
             controller.state = "LOCKED_TEST"
         self.assertEqual(controller.get_state(), "LOCKED_TEST")

@@ -13,6 +13,7 @@ class ProgrammedController(MainController):
         self.port = port
         self.board = board
         self.head_control = False
+        self.arm_control = False
 
         try:
             if self.port is None or self.board is None:
@@ -35,25 +36,41 @@ class ProgrammedController(MainController):
             if response is None:
                 raise Exception("No response from main controller")
 
+            robots_state = ""
+
             main_controller_attached = response.get("main_controller") == "attached"
             temperature_sensor_attached = response.get("temperature_sensor") == "attached"
             audio_mouth_eyes_attached = response.get("audio_mouth_eyes") == "attached"
             dynamixel_controller_attached = response.get("dynamixel_controller") == "attached"
+            arm_control_attached = response.get("arm_controller") == "attached"
 
             if not main_controller_attached:
                 raise Exception("Main controller not attached")
             if not temperature_sensor_attached:
                 raise Exception("Temperature sensor not attached")
+
+            robots_state += " | Main controller attached"
+            robots_state += " | Temperature sensor attached"
             
             if not audio_mouth_eyes_attached:
                 self.log_warning("Audio mouth and eyes not attached, Head will not move")
+                self.head_control = False
             elif not dynamixel_controller_attached:
                 self.log_warning("Dynamixel controller not attached, Head will not move")
+                self.head_control = False
             else:
                 self.head_control = True
-                return "Main controller attached, temperature sensor attached, audio mouth and eyes attached, dynamixel controller attached"
-            
-            return "Main controller and temperature sensor attached"
+                robots_state += " | Audio mouth and eyes attached"
+                robots_state += " | Dynamixel controller attached"
+
+            if arm_control_attached:
+                self.arm_control = True
+                robots_state += " | Arm control attached"
+            else:
+                self.log_warning("Arm control not attached, Arm will not move")        
+                self.arm_control = False
+
+            return robots_state
         except Exception as e:
             self.log_error(f"Error in get_ping: {e}")
             return None
@@ -237,6 +254,8 @@ class ProgrammedController(MainController):
             self.log_error(f"Error in get_map_list: {e}")
             return None
 
+################# HEAD CONTROL COMMANDS #################
+
     # // float: yaw (rotation angle between 100.0 and 260.0 degrees - 180.0 is looking straight ahead)
     # // float: pitch (vertical angle between 150.0 and 250.0 degrees - 180.0 is looking straight ahead)
     # // Example - "LOOK,180.0,180.0"
@@ -283,6 +302,64 @@ class ProgrammedController(MainController):
             self.log_error(f"Error in set_gaze: {e}")
             return False
 
+################# ARM CONTROL COMMANDS #################
+
+    def arm_calibrate(self):
+        try:
+            self.check_arm_control()
+            super().send_raw_command("A_CAL")
+            # Not fetching json response since machine mode not implemented
+            return True
+        except Exception as e:
+            self.log_error(f"Error in arm_calibrate: {e}")
+            return False
+        
+    def open_gripper(self):
+        try:
+            self.check_arm_control()
+            super().send_raw_command("A_OPEN")
+            # Not fetching json response since machine mode not implemented
+            return True
+        except Exception as e:
+            self.log_error(f"Error in open_gripper: {e}")
+            return False
+            
+    def close_gripper(self):
+        try:
+            self.check_arm_control()
+            super().send_raw_command("A_CLOSE")
+            # Not fetching json response since machine mode not implemented
+            return True
+        except Exception as e:
+            self.log_error(f"Error in close_gripper: {e}")
+            return False
+
+    # int: joint - Joint number from 1 to 6. Joint 1 is the base and is in order moving up the arm
+    # float: joint6_angle - Unit is degrees (eg. -55 degrees). Valid values are in the range of -165.0 to 165.0 for joints 1 to 5 and -175.0 to 175.0 for joint 6
+    # int: speed - Speed the arm moves to the new position. Valid values are in the range of 0 to 100
+    def move_single_joint(self, joint_id, angle, speed):
+        try:
+            self.check_arm_control()
+            super().send_raw_command(f"A_ANGLE,{joint_id},{angle},{speed}")
+            # Not fetching json response since machine mode not implemented
+            return True
+        except Exception as e:
+            self.log_error(f"Error in move_single_joint: {e}")
+            return False
+    
+    # int: speed - Speed the arm moves to the new position. Valid values are in the range of 0 to 100
+    # A_ANGLES,0,0,0,0,0,0,30
+    def move_all_joint(self, j_agl_1, j_agl_2, j_agl_3, j_agl_4, j_agl_5, j_agl_6, speed):
+        try:
+            self.check_arm_control()
+            super().send_raw_command(f"A_ANGLES,{j_agl_1},{j_agl_2},{j_agl_3},{j_agl_4},{j_agl_5},{j_agl_6},{speed}")
+            # Not fetching json response since machine mode not implemented
+            return True
+        except Exception as e:
+            self.log_error(f"Error in move_all_joint: {e}")
+            return False    
+            
+            
 ################# End of serial command methods #################
 
     def get_current_action(self):
@@ -322,6 +399,10 @@ class ProgrammedController(MainController):
     def check_head_control(self):
         if not self.head_control:
             raise Exception("Head control needs to be activated before this command. Please activate head control first.")
+
+    def check_arm_control(self):
+        if not self.arm_control:
+            raise Exception("Arm control needs to be activated before this command. Please activate arm control first.")
 
     def check_system(self):
         try:
