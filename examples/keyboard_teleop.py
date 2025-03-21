@@ -63,6 +63,7 @@ class Teleop:
         self.robot.init_driver()
         self.robot.activate_machine_mode()
         self.robot.leave_base()
+        self.robot.get_ping() 
         
         # Modify movement parameters
         self.step_size = 0.2 # mm
@@ -74,29 +75,6 @@ class Teleop:
         
         # Print initial instructions to terminal
         self.print_terminal_instructions()
-
-    def cleanup(self):
-        """Cleanup method to properly shut down the robot and restore terminal settings"""
-        try:
-            # Restore terminal settings
-            self.kb.set_normal_term()
-            # Dock the robot
-            self.robot.dock()
-            time.sleep(2) 
-            # Destroy the robot connection
-            self.robot.destroy()
-            
-        except Exception as e:
-            print(f"\nError during cleanup: {e}")
-            # Try to restore terminal settings even if there's an error
-            try:
-                self.kb.set_normal_term()
-            except:
-                pass
-
-    def __del__(self):
-        """Destructor to ensure cleanup is called"""
-        self.cleanup()
 
     def print_terminal_instructions(self):
         """Print instructions to the terminal"""
@@ -173,6 +151,29 @@ class Teleop:
             l_vel = None
             r_vel = None
             time.sleep(0.01)
+
+    def cleanup(self):
+        """Cleanup method to properly shut down the robot and restore terminal settings"""
+        try:
+            # Restore terminal settings
+            self.kb.set_normal_term()
+            # Dock the robot
+            self.robot.dock()
+            time.sleep(2) 
+            # Destroy the robot connection
+            self.robot.destroy()
+            
+        except Exception as e:
+            print(f"\nError during cleanup: {e}")
+            # Try to restore terminal settings even if there's an error
+            try:
+                self.kb.set_normal_term()
+            except:
+                pass
+
+    def __del__(self):
+        """Destructor to ensure cleanup is called"""
+        self.cleanup()
 
 
 # Main entry point
