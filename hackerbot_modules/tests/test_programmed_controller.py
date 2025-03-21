@@ -15,7 +15,9 @@ class TestProgrammedController(unittest.TestCase):
             self.assertEqual(controller.port, 'mock_port')
         
     def test_init_without_port_and_board(self):
-        with patch.object(MainController, 'get_board_and_port', return_value= ('mock_board', 'mock_port')):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_board_and_port', return_value= ('mock_board', 'mock_port')):
+            
             controller = ProgrammedController(verbose_mode=True)
             self.assertTrue(controller.controller_initialized)
             self.assertEqual(controller.board, 'mock_board')
@@ -24,18 +26,20 @@ class TestProgrammedController(unittest.TestCase):
             
     def test_get_ping_success(self):
         with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None), \
              patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached","temperature_sensor": "attached", "audio_mouth_eyes": "attached", "dynamixel_controller": "attached", "arm_controller": "attached"}):
             controller = ProgrammedController(verbose_mode=True)
             controller.driver_initialized = True
             controller.machine_mode = True
             result = controller.get_ping()
         
-            self.assertEqual(result, "Main controller attached | Temperature sensor attached | Audio mouth and eyes attached | Dynamixel controller attached | Arm control attached | ")
+            self.assertEqual(result, " | Main controller attached | Temperature sensor attached | Audio mouth and eyes attached | Dynamixel controller attached | Arm control attached")
             self.assertTrue(controller.head_control)
             self.assertTrue(controller.arm_control)
 
     def test_get_ping_main_controller_not_attached(self):
         with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None), \
              patch.object(MainController, 'get_json_from_command', return_value= {"temperature_sensor": "attached"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
@@ -47,6 +51,7 @@ class TestProgrammedController(unittest.TestCase):
         
     def test_get_ping_temperature_sensor_not_attached(self):
         with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None), \
              patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
@@ -58,6 +63,7 @@ class TestProgrammedController(unittest.TestCase):
 
     def test_get_ping_audio_mouth_eyes_not_attached(self):
         with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None), \
              patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached", "temperature_sensor": "attached", "dynamixel_controller": "attached", "arm_controller": "attached"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
@@ -70,6 +76,7 @@ class TestProgrammedController(unittest.TestCase):
 
     def test_get_ping_dynamixel_controller_not_attached(self):
         with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None), \
              patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached", "temperature_sensor": "attached", "audio_mouth_eyes": "attached", "arm_controller": "attached"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
@@ -82,6 +89,7 @@ class TestProgrammedController(unittest.TestCase):
 
     def test_get_ping_arm_control_not_attached(self):
         with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None), \
              patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached", "temperature_sensor": "attached", "audio_mouth_eyes": "attached", "dynamixel_controller": "attached"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
@@ -95,6 +103,7 @@ class TestProgrammedController(unittest.TestCase):
         
     def test_get_versions_success(self):
         with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None), \
              patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": 7}):
             controller = ProgrammedController()
             controller.driver_initialized = True
@@ -115,13 +124,15 @@ class TestProgrammedController(unittest.TestCase):
         self.assertIsNone(result)
         self.assertIn("Error in get_versions", controller.error_msg)
         
+
     def test_activate_machine_mode_success(self):
         with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None), \
              patch.object(MainController, 'get_json_from_command', return_value= {"command": "machine", "success": "true"}):
-            controller = ProgrammedController()
+            controller = ProgrammedController(port="/dev/MOCK_PORT", board="mock_board", verbose_mode=True)
             controller.driver_initialized = True
-            controller.machine_mode = True
-        
+            controller.machine_mode = False
+    
             result = controller.activate_machine_mode()
         
             self.assertTrue(result)
@@ -129,6 +140,7 @@ class TestProgrammedController(unittest.TestCase):
         
     def test_activate_machine_mode_failure(self):
         with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None), \
              patch.object(MainController, 'get_json_from_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
@@ -154,6 +166,7 @@ class TestProgrammedController(unittest.TestCase):
         
     def test_enable_tofs_success(self):
         with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None), \
              patch.object(MainController, 'get_json_from_command', return_value= {"command": "tofs", "success": "true"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
@@ -165,6 +178,7 @@ class TestProgrammedController(unittest.TestCase):
 
     def test_enable_tofs_failure(self):
         with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None), \
              patch.object(MainController, 'get_json_from_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
@@ -177,6 +191,7 @@ class TestProgrammedController(unittest.TestCase):
         
     def test_disable_tofs_success(self):
         with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None), \
              patch.object(MainController, 'get_json_from_command', return_value= {"command": "tofs", "success": "true"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
@@ -188,6 +203,7 @@ class TestProgrammedController(unittest.TestCase):
     
     def test_disable_tofs_failure(self):
         with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None), \
              patch.object(MainController, 'get_json_from_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
@@ -263,6 +279,7 @@ class TestProgrammedController(unittest.TestCase):
 
     def test_move_success(self):
         with patch.object(MainController, '__init__', return_value= None), \
+            patch.object(MainController, 'send_raw_command', return_value= None), \
              patch.object(MainController, 'get_json_from_command', return_value= {"command": "motor", "success": "true"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
@@ -273,6 +290,7 @@ class TestProgrammedController(unittest.TestCase):
 
     def test_move_failure(self):
         with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None), \
              patch.object(MainController, 'get_json_from_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
@@ -284,6 +302,7 @@ class TestProgrammedController(unittest.TestCase):
             
     def test_get_map_success(self):
         with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None), \
              patch.object(MainController, 'get_json_from_command', return_value= {"compressedmapdata": "map_data_content", "command": "getmap", "success": "true"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
@@ -295,6 +314,7 @@ class TestProgrammedController(unittest.TestCase):
         
     def test_get_map_failure(self):
         with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None), \
              patch.object(MainController, 'get_json_from_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
@@ -308,6 +328,7 @@ class TestProgrammedController(unittest.TestCase):
         
     def test_get_map_list_success(self):
         with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None), \
              patch.object(MainController, 'get_json_from_command', return_value= {"map_ids": [1, 2, 3]}):
             controller = ProgrammedController()
             controller.driver_initialized = True
@@ -319,6 +340,7 @@ class TestProgrammedController(unittest.TestCase):
 
     def test_get_map_list_failure(self):
         with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None), \
              patch.object(MainController, 'get_json_from_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
@@ -540,7 +562,7 @@ class TestProgrammedController(unittest.TestCase):
 
             result = controller.move_all_joint(180, 180, 180, 180, 180, 180, 1)
             self.assertFalse(result)
-            self.assertIn("Error in move_all_joints", controller.error_msg)
+            self.assertIn("Error in move_all_joint", controller.error_msg)
 
 ############ TEST OTHER COMMANDS ############
 

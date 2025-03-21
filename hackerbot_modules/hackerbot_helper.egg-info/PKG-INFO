@@ -1,3 +1,5 @@
-Metadata-Version: 2.1
-Name: hackerbot-helper
+Metadata-Version: 2.2
+Name: hackerbot_helper
 Version: 0.1
+Requires-Dist: pyserial
+Dynamic: requires-dist

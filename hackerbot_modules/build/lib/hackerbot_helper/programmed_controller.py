@@ -49,22 +49,26 @@ class ProgrammedController(MainController):
             if not temperature_sensor_attached:
                 raise Exception("Temperature sensor not attached")
 
-            robots_state += "Main controller attached | "
-            robots_state += "Temperature sensor attached |"
+            robots_state += " | Main controller attached"
+            robots_state += " | Temperature sensor attached"
             
             if not audio_mouth_eyes_attached:
                 self.log_warning("Audio mouth and eyes not attached, Head will not move")
+                self.head_control = False
             elif not dynamixel_controller_attached:
                 self.log_warning("Dynamixel controller not attached, Head will not move")
+                self.head_control = False
             else:
                 self.head_control = True
-                robots_state += "Audio mouth and eyes attached | Dynamixel controller attached | "
+                robots_state += " | Audio mouth and eyes attached"
+                robots_state += " | Dynamixel controller attached"
 
             if arm_control_attached:
                 self.arm_control = True
-                robots_state += "Arm control attached | "
+                robots_state += " | Arm control attached"
             else:
                 self.log_warning("Arm control not attached, Arm will not move")        
+                self.arm_control = False
 
             return robots_state
         except Exception as e:
