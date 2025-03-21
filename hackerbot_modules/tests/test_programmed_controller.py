@@ -23,7 +23,8 @@ class TestProgrammedController(unittest.TestCase):
 
             
     def test_get_ping_success(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached","temperature_sensor": "attached", "audio_mouth_eyes": "attached", "dynamixel_controller": "attached", "arm_controller": "attached"}):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached","temperature_sensor": "attached", "audio_mouth_eyes": "attached", "dynamixel_controller": "attached", "arm_controller": "attached"}):
             controller = ProgrammedController(verbose_mode=True)
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -34,7 +35,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertTrue(controller.arm_control)
 
     def test_get_ping_main_controller_not_attached(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= {"temperature_sensor": "attached"}):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= {"temperature_sensor": "attached"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -44,7 +46,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertIn("Error in get_ping", controller.error_msg)
         
     def test_get_ping_temperature_sensor_not_attached(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached"}):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -54,7 +57,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertIn("Error in get_ping", controller.error_msg)
 
     def test_get_ping_audio_mouth_eyes_not_attached(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached", "temperature_sensor": "attached", "dynamixel_controller": "attached", "arm_controller": "attached"}):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached", "temperature_sensor": "attached", "dynamixel_controller": "attached", "arm_controller": "attached"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -65,7 +69,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertIn("Audio mouth and eyes not attached, Head will not move", controller.warning_msg)
 
     def test_get_ping_dynamixel_controller_not_attached(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached", "temperature_sensor": "attached", "audio_mouth_eyes": "attached", "arm_controller": "attached"}):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached", "temperature_sensor": "attached", "audio_mouth_eyes": "attached", "arm_controller": "attached"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -76,7 +81,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertIn("Dynamixel controller not attached, Head will not move", controller.warning_msg)
 
     def test_get_ping_arm_control_not_attached(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached", "temperature_sensor": "attached", "audio_mouth_eyes": "attached", "dynamixel_controller": "attached"}):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached", "temperature_sensor": "attached", "audio_mouth_eyes": "attached", "dynamixel_controller": "attached"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -88,7 +94,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertIn("Arm control not attached, Arm will not move", controller.warning_msg)
         
     def test_get_versions_success(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": 7}):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": 7}):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -97,7 +104,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertEqual(result, "Main controller version: 7")
         
     def test_get_versions_failure(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= {}):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= {}):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -108,7 +116,8 @@ class TestProgrammedController(unittest.TestCase):
         self.assertIn("Error in get_versions", controller.error_msg)
         
     def test_activate_machine_mode_success(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= {"command": "machine", "success": "true"}):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= {"command": "machine", "success": "true"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -119,7 +128,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertTrue(controller.machine_mode)
         
     def test_activate_machine_mode_failure(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = False
@@ -131,7 +141,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertIn("Error in activate_machine_mode", controller.error_msg)
 
     def test_deactivate_machine_mode_success(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -142,7 +153,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertFalse(controller.machine_mode)
         
     def test_enable_tofs_success(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= {"command": "tofs", "success": "true"}):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= {"command": "tofs", "success": "true"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -152,7 +164,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertTrue(result)
 
     def test_enable_tofs_failure(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -163,7 +176,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertIn("Error in enable TOFs", controller.error_msg)
         
     def test_disable_tofs_success(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= {"command": "tofs", "success": "true"}):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= {"command": "tofs", "success": "true"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -173,7 +187,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertTrue(result)
     
     def test_disable_tofs_failure(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -184,7 +199,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertIn("Error in disable TOFs", controller.error_msg)
         
     def test_init_driver_success(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = False
             
@@ -194,7 +210,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertTrue(controller.driver_initialized)
         
     def test_leave_base_success(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -204,7 +221,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertTrue(result)
         
     def test_stop_driver_success(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -214,7 +232,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertFalse(controller.driver_initialized)
         
     def test_quickmap_success(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -223,7 +242,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertTrue(result)
         
     def test_dock_success(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -232,7 +252,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertTrue(result)
         
     def test_goto_pos_success(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -241,7 +262,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertTrue(result)
 
     def test_move_success(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= {"command": "motor", "success": "true"}):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= {"command": "motor", "success": "true"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -250,7 +272,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertTrue(result)
 
     def test_move_failure(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -260,7 +283,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertIn("Error in move", controller.error_msg)
             
     def test_get_map_success(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= {"compressedmapdata": "map_data_content", "command": "getmap", "success": "true"}):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= {"compressedmapdata": "map_data_content", "command": "getmap", "success": "true"}):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -270,7 +294,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertEqual(result, "map_data_content")
         
     def test_get_map_failure(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -282,7 +307,8 @@ class TestProgrammedController(unittest.TestCase):
 
         
     def test_get_map_list_success(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= {"map_ids": [1, 2, 3]}):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= {"map_ids": [1, 2, 3]}):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -292,7 +318,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertEqual(result, [1, 2, 3])
 
     def test_get_map_list_failure(self):
-        with patch.object(MainController, 'get_json_from_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_json_from_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -305,7 +332,8 @@ class TestProgrammedController(unittest.TestCase):
 ############ TEST HEAD CONTROL ############
 
     def test_move_head_success(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -315,7 +343,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertTrue(result)
 
     def test_move_head_failure(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -327,7 +356,8 @@ class TestProgrammedController(unittest.TestCase):
 
 
     def test_enable_idle_mode_success(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -337,7 +367,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertTrue(result)
 
     def test_enable_idle_mode_failure(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -348,7 +379,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertIn("Error in set_idle", controller.error_msg)
 
     def test_disable_idle_mode_success(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -358,7 +390,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertTrue(result)
 
     def test_disable_idle_mode_failure(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -369,7 +402,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertIn("Error in set_idle", controller.error_msg)
 
     def test_set_gaze_success(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -379,7 +413,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertTrue(result)
 
     def test_set_gaze_failure(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -393,7 +428,8 @@ class TestProgrammedController(unittest.TestCase):
 ############ TEST ARM CONTROL ############
 
     def test_arm_calibrate_success(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -403,7 +439,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertTrue(result)
 
     def test_arm_calibrate_failure(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -414,7 +451,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertIn("Error in arm_calibrate", controller.error_msg)
 
     def test_open_gripper_success(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -424,7 +462,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertTrue(result)
 
     def test_open_gripper_failure(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -435,7 +474,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertIn("Error in open_gripper", controller.error_msg)
 
     def test_close_gripper_success(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController() 
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -445,7 +485,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertTrue(result)
 
     def test_close_gripper_failure(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -456,7 +497,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertIn("Error in close_gripper", controller.error_msg)
 
     def test_move_single_joint_success(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -466,7 +508,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertTrue(result)
 
     def test_move_single_joint_failure(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -477,7 +520,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertIn("Error in move_single_joint", controller.error_msg)
 
     def test_move_all_joint_success(self):
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -487,7 +531,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertTrue(result)
 
     def test_move_all_joints_failure(self): 
-        with patch.object(MainController, 'send_raw_command', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'send_raw_command', return_value= None):
             controller = ProgrammedController()
             controller.driver_initialized = True
             controller.machine_mode = True
@@ -500,7 +545,8 @@ class TestProgrammedController(unittest.TestCase):
 ############ TEST OTHER COMMANDS ############
 
     def test_get_current_action(self):
-        with patch.object(MainController, 'get_state', return_value= "ACTION"):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_state', return_value= "ACTION"):
             controller = ProgrammedController()
         
             result = controller.get_current_action()
@@ -508,7 +554,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertEqual(result, "ACTION")
         
     def test_get_error_with_ser_error(self):
-        with patch.object(MainController, 'get_ser_error', return_value= "Serial error"):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_ser_error', return_value= "Serial error"):
             controller = ProgrammedController()
             controller.error_msg = "Controller error"
         
@@ -517,7 +564,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertEqual(result, "Serial error")
         
     def test_get_error_with_no_ser_error(self):
-        with patch.object(MainController, 'get_ser_error', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'get_ser_error', return_value= None):
             controller = ProgrammedController()
             controller.error_msg = "Controller error"
         
@@ -527,7 +575,8 @@ class TestProgrammedController(unittest.TestCase):
 
         
     def test_destroy_success(self):
-        with patch.object(MainController, 'stop_read_thread', return_value= None):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'stop_read_thread', return_value= None):
             controller = ProgrammedController()
             controller.controller_initialized = True
             result = controller.destroy()
@@ -536,7 +585,8 @@ class TestProgrammedController(unittest.TestCase):
             self.assertFalse(controller.controller_initialized)
         
     def test_destroy_failure(self):
-        with patch.object(MainController, 'stop_read_thread', side_effect= Exception("Destroy error")):
+        with patch.object(MainController, '__init__', return_value= None), \
+             patch.object(MainController, 'stop_read_thread', side_effect= Exception("Destroy error")):
             controller = ProgrammedController()
             controller.controller_initialized = True
             

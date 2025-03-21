@@ -76,10 +76,11 @@ class TestMainController(unittest.TestCase):
 ##### JSON TESTS
 
     def test_get_json_from_command_found(self):
-        controller = MainController()
-        controller.json_entries.append({"command": "TEST", "success": "true"})
-        result = controller.get_json_from_command("TEST")
-        self.assertEqual(result, {"command": "TEST", "success": "true"})
+        with patch.object(MainController, '__init__', return_value=None):
+            controller = MainController()
+            controller.json_entries.append({"command": "TEST", "success": "true"})
+            result = controller.get_json_from_command("TEST")
+            self.assertEqual(result, {"command": "TEST", "success": "true"})
 
     def test_get_json_from_command_not_found(self):
         controller = MainController()
