@@ -1,15 +1,14 @@
 import hackerbot_helper as hhp
 import time
-import math
 import os
 
-import sys, tty, termios, atexit
+import sys
 from select import select
-from base_keyboard_teleop import KBHit
-from arm_keyboard_teleop import ArmTeleop
-from base_keyboard_teleop import BaseTeleop
+from arm_teleop import ArmTeleop
+from base_teleop import BaseTeleop, KBHit
+from head_teleop import HeadTeleop
 
-class Arm_Base_Teleop(ArmTeleop, BaseTeleop):
+class AI_ELITE_Teleop(ArmTeleop, BaseTeleop, HeadTeleop):
     def __init__(self):
         self.kb = KBHit()
 
@@ -24,7 +23,7 @@ class Arm_Base_Teleop(ArmTeleop, BaseTeleop):
         self.max_l_step_size = 300.0 # mm/s
         self.max_r_step_size = 90.0 # degree/s
         
-        self.arm_speed = 50
+        self.joint_speed = 50
 
         self.j_agl_1 = 0
         self.j_agl_2 = 0
@@ -33,7 +32,11 @@ class Arm_Base_Teleop(ArmTeleop, BaseTeleop):
         self.j_agl_5 = 0
         self.j_agl_6 = 0
 
+        self.yaw = 180
+        self.pitch = 180
+
         self.base_command = None
+        self.head_command = None
         self.arm_command = None
 
         self.stop = False
@@ -46,34 +49,32 @@ class Arm_Base_Teleop(ArmTeleop, BaseTeleop):
         """Print instructions to the terminal"""
         os.system('clear' if os.name == 'posix' else 'cls')
         print("\n=== Robot Teleop Controls ===\r")
-        print("\nMoving controls:\r")
-        print("   ↑/↓    : forward/backward\r")
-        print("   ←/→    : rotate left/right\r")
-        print(" space  : stop\r")
-        print("o/p : increase/decrease step size by 10%\r")
+        print("Base controls:\r")
+        print("   ↑ / ↓    : FWD/BCK |   ← / →    : L/R | space  : STOP\r")
         print("=" * 30 + "\r")
-        print("\nJoint Controls (±165° for joints 1-5, ±175° for joint 6):\r")
-        print("   q/w : Joint 1 rotate L/R\r")
-        print("   a/s : Joint 2 rotate B/F\r")
-        print("   z/x : Joint 3 rotate B/F\r")
-        print("   e/r : Joint 4 rotate B/F\r")
-        print("   d/f : Joint 5 rotate L/R\r")
-        print("   c/v : Joint 6 rotate L/R\r")
-        
-        print("\nGripper Controls: \r")
+        print("Head Controls:\r")
+        print("   u/i : Yaw L/R |   j/k : Pitch U/D")
+        print("=" * 30 + "\r")
+        print("Arm Controls:\r")
+        print("   q/w : Joint 1 L/R     |   a/s : Joint 2 BCK/FWD |   z/x : Joint 3 BCK/FWD")
+        print("   e/r : Joint 4 BCK/FWD |   d/f : Joint 5 L/R     |   c/v : Joint 6 L/R")
+        print("\nGripper:")
         print("   g/h    : Open/Close gripper | b    : Calibrate gripper\r")
         
-        print("\nOther Controls:\r")
+        print("\nOther:")
         print("   o/p : increase/decrease step size | -/+ : decrease/increase speed\r")
         print("\nCTRL-C or 0 to quit\r")
         print("=" * 40 + "\r")
 
     def update_display(self):
         """Update step size and speed in place without adding new lines"""
-        sys.stdout.write(f"\rCurrent step size: {self.step_size:.1f}° | Current arm speed: {self.arm_speed}%    ")
+        sys.stdout.write(f"\rCurrent step size: {self.step_size:.1f}° | Current joint speed: {self.joint_speed}%    ")
         sys.stdout.flush()  # Ensure immediate update
 
     def get_command(self):
+        self.base_command = False
+        self.head_command = False
+        self.arm_command = False
         key = None
         # Read keyboard input
         if self.kb.kbhit() is not None:
@@ -102,21 +103,23 @@ class Arm_Base_Teleop(ArmTeleop, BaseTeleop):
                 if self.step_size < 0.1:
                     self.step_size = 0.1
             elif key == '-':
-                self.arm_speed -= 10
-                if self.arm_speed < 10:
-                    self.arm_speed = 10
+                self.joint_speed -= 10
+                if self.joint_speed < 10:
+                    self.joint_speed = 10
             elif key == '+':
-                self.arm_speed += 10
-                if self.arm_speed > 100:
-                    self.arm_speed = 100
+                self.joint_speed += 10
+                if self.joint_speed > 100:
+                    self.joint_speed = 100
             if key in ['\x1b[A', '\x1b[B', '\x1b[D', '\x1b[C', ' ']:
                 l_vel, r_vel = BaseTeleop.get_base_command_from_key(self, key)
                 self.base_command = True
-                self.arm_command = False
                 return l_vel, r_vel
+            elif key in ['u', 'i', 'j', 'k']:
+                y, p = HeadTeleop.get_head_value_from_key(self, key)
+                self.head_command = True
+                return y, p
             elif key in ['q', 'w', 'a', 's', 'z', 'x', 'e', 'r', 'd', 'f', 'c', 'v', 'g', 'h', 'b']:
                 command, value = ArmTeleop.get_arm_value_from_key(self, key)
-                self.base_command = False
                 self.arm_command = True
                 return command, value
             else:
@@ -134,6 +137,9 @@ class Arm_Base_Teleop(ArmTeleop, BaseTeleop):
                 if self.base_command:
                     response = self.robot.move(input_1, input_2)
                     time.sleep(0.01)
+                elif self.head_command:
+                    response = self.robot.move_head(input_1, input_2, self.joint_speed)
+                    time.sleep(0.01)
                 elif self.arm_command:
                     command = input_1
                     value = input_2
@@ -141,7 +147,7 @@ class Arm_Base_Teleop(ArmTeleop, BaseTeleop):
                         # Limit joint angles based on which joint
                         max_angle = 175.0 if command == 6 else 165.0
                         if abs(value) <= max_angle:
-                            response = self.robot.move_single_joint(command, value, self.arm_speed)
+                            response = self.robot.move_single_joint(command, value, self.joint_speed)
                     elif command == 'gripper_open':
                         response = self.robot.open_gripper()
                     elif command == 'gripper_close':
@@ -149,7 +155,7 @@ class Arm_Base_Teleop(ArmTeleop, BaseTeleop):
                     elif command == 'gripper_calibrate':
                         response = self.robot.arm_calibrate()
                     
-                    time.sleep(0.5)
+                    time.sleep(0.2)
 
                 if response == False:
                     break
@@ -158,17 +164,19 @@ class Arm_Base_Teleop(ArmTeleop, BaseTeleop):
             input_2 = None
             self.update_display()
 
+    def stow(self):
+        self.robot.move_all_joint(0,0,0,0,0,0,50) 
+        self.robot.move_head(180,180,50)
+        time.sleep(1)
+        self.robot.dock()
+
     def cleanup(self):
         """Cleanup method to properly shut down the robot and restore terminal settings"""
         try:
             # Restore terminal settings
             self.kb.set_normal_term()
             # self.robot.stop_driver()
-            self.robot.move_all_joint(0,0,0,0,0,0,50) 
-            time.sleep(1)
-            time.sleep(5)
-            # Dock the robot
-            self.robot.dock()
+            self.stow()
             # Destroy the robot connection
             self.robot.destroy()
             
@@ -188,7 +196,7 @@ class Arm_Base_Teleop(ArmTeleop, BaseTeleop):
 if __name__ == '__main__':
     teleop = None
     try:
-        teleop = Arm_Base_Teleop()
+        teleop = AI_ELITE_Teleop()
         teleop.run()
     except KeyboardInterrupt:
         print("\nShutting down...")

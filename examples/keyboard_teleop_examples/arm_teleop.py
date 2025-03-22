@@ -1,11 +1,10 @@
 import hackerbot_helper as hhp
 import time
-import math
 import os
 
-import sys, tty, termios, atexit
+import sys
 from select import select
-from base_keyboard_teleop import KBHit
+from base_teleop import KBHit
 
 class ArmTeleop:
     def __init__(self):
@@ -40,19 +39,19 @@ class ArmTeleop:
         print("\n=== Robot Arm Teleop Controls ===")
         
         print("\nJoint Controls (±165° for joints 1-5, ±175° for joint 6):")
-        print("   q/w : Joint 1 rotate L/R")
-        print("   a/s : Joint 2 rotate B/F")
-        print("   z/x : Joint 3 rotate B/F")
-        print("   e/r : Joint 4 rotate B/F")
-        print("   d/f : Joint 5 rotate L/R")
-        print("   c/v : Joint 6 rotate L/R")
+        print("   q/w : Joint 1 L/R")
+        print("   a/s : Joint 2 BCK/FWD")
+        print("   z/x : Joint 3 BCK/FWD")
+        print("   e/r : Joint 4 BCK/FWD")
+        print("   d/f : Joint 5 L/R")
+        print("   c/v : Joint 6 L/R")
         
         print("\nGripper Controls:")
         print("   g/h    : Open/Close gripper")
         print("   b    : Calibrate gripper")
         
         print("\nOther Controls:")
-        print("   p/o : increase/decrease step size")
+        print("   o/p : increase/decrease step size")
         print("   -/+ : decrease/increase speed")
         print("\nCTRL-C or 0 to quit")
         
@@ -173,7 +172,7 @@ class ArmTeleop:
                 
                 if response == False:
                     break
-            time.sleep(0.5)
+            time.sleep(0.2)
             self.update_display()
 
     def cleanup(self):

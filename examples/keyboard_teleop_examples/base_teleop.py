@@ -1,9 +1,8 @@
 import hackerbot_helper as hhp
 import time
-import math
 import os
 
-import sys, tty, termios, atexit
+import sys, termios, atexit
 from select import select
 
 class KBHit:
@@ -81,9 +80,7 @@ class BaseTeleop:
         os.system('clear' if os.name == 'posix' else 'cls')
         print("\n=== Robot Teleop Controls ===\r")
         print("\nMoving controls:\r")
-        print("   ↑/↓    : forward/backward\r")
-        print("   ←/→    : rotate left/right\r")
-        print(" space  : stop\r")
+        print("   ↑ / ↓    : forward/backward |   ← / →    : rotate left/right | space  : stop\r")
         print("o/p : increase/decrease step size by 10%\r")
         print("\nCTRL-C or '0' to quit\r")
         print("=" * 30 + "\r")
@@ -165,10 +162,8 @@ class BaseTeleop:
         try:
             # Restore terminal settings
             self.kb.set_normal_term()
-            self.robot.stop_driver()
-            time.sleep(2)
             # Dock the robot
-            # self.robot.dock()
+            self.robot.dock()
             time.sleep(2) 
             # Destroy the robot connection
             self.robot.destroy()
