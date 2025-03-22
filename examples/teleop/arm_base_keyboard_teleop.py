@@ -54,9 +54,9 @@ class Arm_Base_Teleop(ArmTeleop, BaseTeleop):
         print("=" * 30 + "\r")
         print("\nJoint Controls (±165° for joints 1-5, ±175° for joint 6):\r")
         print("   q/w : Joint 1 rotate L/R\r")
-        print("   a/s : Joint 2 rotate L/R\r")
-        print("   z/x : Joint 3 rotate L/R\r")
-        print("   e/r : Joint 4 rotate L/R\r")
+        print("   a/s : Joint 2 rotate B/F\r")
+        print("   z/x : Joint 3 rotate B/F\r")
+        print("   e/r : Joint 4 rotate B/F\r")
         print("   d/f : Joint 5 rotate L/R\r")
         print("   c/v : Joint 6 rotate L/R\r")
         
