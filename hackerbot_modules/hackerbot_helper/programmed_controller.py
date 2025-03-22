@@ -26,6 +26,8 @@ class ProgrammedController(MainController):
         except Exception as e:
             self.log_error(f"Error initializing ProgrammedController: {e}")
 
+################# BASE COMMANDS #################
+
     # Get ping response, check if main controller and temperature sensor are attached
     def get_ping(self):
         try:

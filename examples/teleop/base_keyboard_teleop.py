@@ -55,7 +55,7 @@ class KBHit:
         sys.stdin.read(1)
     return dr != []
 
-class Teleop:
+class BaseTeleop:
     def __init__(self):
         self.kb = KBHit()
 
@@ -81,22 +81,23 @@ class Teleop:
         os.system('clear' if os.name == 'posix' else 'cls')
         print("\n=== Robot Teleop Controls ===\r")
         print("\nMoving controls:\r")
-        print("   w    : forward\r")
-        print("   a    : rotate left\r")
-        print("   s    : stop\r")
-        print("   d    : rotate right\r")
-        print("   x    : backward\r")
-        print("r/t : increase/decrease step size by 10%\r")
-        print("\nCTRL-C/q to quit\r")
-        print(f"\nCurrent step size: {self.step_size:.2f}m\r")
+        print("   ↑/↓    : forward/backward\r")
+        print("   ←/→    : rotate left/right\r")
+        print(" space  : stop\r")
+        print("o/p : increase/decrease step size by 10%\r")
+        print("\nCTRL-C or '0' to quit\r")
         print("=" * 30 + "\r")
+
+    def update_display(self):
+        """Update step size in place without adding new lines"""
+        sys.stdout.write(f"\rCurrent step size: {self.step_size:.2f}m\r")
+        sys.stdout.flush()  # Ensure immediate update
 
     def get_command(self):
         key = None
         # Read keyboard input
         if self.kb.kbhit() is not None:
             key = self.kb.getch()
-            # print(f"key: {key}\r")
             while sys.stdin in select([sys.stdin], [], [], 0)[0]:  
                 sys.stdin.read(1)
 
@@ -107,38 +108,45 @@ class Teleop:
             self.last_key = key  # Update last key
 
             # Check for quit conditions
-            if key in ['q', 'Q']:  # Check for 'q' or Ctrl-C
+            if key == '0':  # '0' key to quit
                 self.stop = True
                 return None, None
                 
-            if key == 'r':
+            if key == 'o':
                 self.step_size += 0.1
-            elif key == 't':
+            elif key == 'p':
                 self.step_size -= 0.1
-
-            if key == 'w':  # Forward
-                l_vel = self.max_l_step_size * self.step_size
-                r_vel = 0.0
-            elif key == 'x':  # Backward
-                l_vel = -self.max_l_step_size * self.step_size
-                r_vel = 0.0
-            elif key == 'a':  # Rotate left
-                l_vel = 0.0
-                r_vel = self.max_r_step_size * self.step_size
-            elif key == 'd':  # Rotate right
-                l_vel = 0.0
-                r_vel = -self.max_r_step_size * self.step_size
-            elif key == 's':  # Stop
-                l_vel = 0.0
-                r_vel = 0.0
+            if key in ['\x1b[A', '\x1b[B', '\x1b[D', '\x1b[C', ' ']:
+                l_vel, r_vel = self.get_base_command_from_key(key)
             else:
                 l_vel = None
                 r_vel = None
-            
+                
             return l_vel, r_vel
         else:
             self.last_key = None
             return 0.0, 0.0
+
+    def get_base_command_from_key(self, key):
+        if key == '\x1b[A':  # Up arrow - Forward
+            l_vel = self.max_l_step_size * self.step_size
+            r_vel = 0.0
+        elif key == '\x1b[B':  # Down arrow - Backward
+            l_vel = -self.max_l_step_size * self.step_size
+            r_vel = 0.0
+        elif key == '\x1b[D':  # Left arrow - Rotate left
+            l_vel = 0.0
+            r_vel = self.max_r_step_size * self.step_size
+        elif key == '\x1b[C':  # Right arrow - Rotate right
+            l_vel = 0.0
+            r_vel = -self.max_r_step_size * self.step_size
+        elif key == ' ':  # Space - Stop
+            l_vel = 0.0
+            r_vel = 0.0
+        else:
+            l_vel = None
+            r_vel = None
+        return l_vel, r_vel
 
     def run(self):
         while not self.stop:
@@ -151,14 +159,16 @@ class Teleop:
             l_vel = None
             r_vel = None
             time.sleep(0.01)
-
+            self.update_display()
     def cleanup(self):
         """Cleanup method to properly shut down the robot and restore terminal settings"""
         try:
             # Restore terminal settings
             self.kb.set_normal_term()
+            self.robot.stop_driver()
+            time.sleep(2)
             # Dock the robot
-            self.robot.dock()
+            # self.robot.dock()
             time.sleep(2) 
             # Destroy the robot connection
             self.robot.destroy()
@@ -180,7 +190,7 @@ class Teleop:
 if __name__ == '__main__':
     teleop = None
     try:
-        teleop = Teleop()
+        teleop = BaseTeleop()
         teleop.run()
     except KeyboardInterrupt:
         print("\nShutting down...")
