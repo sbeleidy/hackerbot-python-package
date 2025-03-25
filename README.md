@@ -10,14 +10,14 @@ Follow these steps to clone the repository and set up the required dependencies.
 ### 1. Clone the Repository
 Use SSH to clone the repository:
 ```bash
-git clone git@github.com:AllenChienXXX/hackerbot_lib.git
+https://github.com/hackerbotindustries/hackerbot-lib.git
 ```
 This will create a directory named `hackerbot_lib` and download all necessary files.
 
 ### 2. Navigate to the Modules Directory
 Move into the `hackerbot_modules` directory:
 ```bash
-cd hackerbot_lib/hackerbot_modules/
+cd hackerbot-lib/hackerbot_modules/
 ```
 
 ### 3. Install Dependencies
@@ -37,7 +37,7 @@ import hackerbot_helper
 To run the unit tests run:
 ```bash
 cd hackerbot_modules/test
-python -m unittest discover
+pytest
 ```
 
 ## Troubleshooting
