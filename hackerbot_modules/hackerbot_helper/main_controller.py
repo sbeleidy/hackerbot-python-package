@@ -70,10 +70,6 @@ class MainController:
         if not self.ser:
             self.ser_error = "Serial connection not initialized."
             # raise ConnectionError("Serial connection not initialized.")
-        
-        if not os.access(self.LOG_FILE_PATH, os.W_OK):
-            self.ser_error = f"Cannot write to {self.LOG_FILE_PATH}"
-            # raise PermissionError(f"Cannot write to {self.LOG_FILE_PATH}")
 
         try:
             while not self.read_thread_stop_event.is_set():  # Check the stop event to exit the loop
@@ -102,8 +98,11 @@ class MainController:
                 except Exception as e:
                     self.ser_error = f"Unexpected read error: {e}"
                     # raise RuntimeError(f"Unexpected read error: {e}")
+        except PermissionError as e:
+            self.ser_error = f"Permission error: {e}"
+            # raise IOError(f"File write error: {e}")
         except Exception as e:
-            self.ser_error = f"File write error: {e}"
+            self.ser_error = f"Unexpected error: {e}"
             # raise IOError(f"File write error: {e}")
 
     def get_json_from_command(self, command_filter=None):
