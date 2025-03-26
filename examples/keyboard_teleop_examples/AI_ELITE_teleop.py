@@ -48,7 +48,7 @@ class AI_ELITE_Teleop(ArmTeleop, BaseTeleop, HeadTeleop):
     def print_terminal_instructions(self):
         """Print instructions to the terminal"""
         os.system('clear' if os.name == 'posix' else 'cls')
-        print("\n=== Robot Teleop Controls ===\r")
+        print("\n" + "="*10 + " Robot Teleop Controls " + "="*10 + "\r")
         print("Base controls:\r")
         print("   ↑ / ↓    : FWD/BCK |   ← / →    : L/R | space  : STOP\r")
         print("=" * 30 + "\r")
@@ -64,7 +64,7 @@ class AI_ELITE_Teleop(ArmTeleop, BaseTeleop, HeadTeleop):
         print("\nOther:")
         print("   o/p : increase/decrease step size | -/+ : decrease/increase speed\r")
         print("\nCTRL-C or 0 to quit\r")
-        print("=" * 40 + "\r")
+        print("=" * 43 + "\r")
 
     def update_display(self):
         """Update step size and speed in place without adding new lines"""

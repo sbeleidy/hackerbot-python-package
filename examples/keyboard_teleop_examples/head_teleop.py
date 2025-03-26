@@ -32,7 +32,7 @@ class HeadTeleop:
     def print_terminal_instructions(self):
         """Print static instructions to the terminal"""
         os.system('clear' if os.name == 'posix' else 'cls')
-        print("\n=== Robot Head Teleop Controls ===")
+        print("\n" + "="*10 + " Robot Head Teleop Controls " + "="*10 + "\r")
         print("   u/i : Yaw rotate L/R")
         print("   j/k : Pitch rotate B/F")
         
@@ -42,7 +42,7 @@ class HeadTeleop:
         print("\nCTRL-C or 0 to quit")
         
         # Reserve space for dynamic updates
-        print("\n" + "=" * 40)
+        print("\n" + "=" * 43 + "\r")
 
     def update_display(self):
         """Update step size and speed in place without adding new lines"""

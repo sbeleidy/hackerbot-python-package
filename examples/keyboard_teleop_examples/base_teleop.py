@@ -78,12 +78,12 @@ class BaseTeleop:
     def print_terminal_instructions(self):
         """Print instructions to the terminal"""
         os.system('clear' if os.name == 'posix' else 'cls')
-        print("\n=== Robot Teleop Controls ===\r")
+        print("\n" + "="*10 + " Robot Teleop Controls " + "="*10 + "\r")
         print("\nMoving controls:\r")
         print("   ↑ / ↓    : forward/backward |   ← / →    : rotate left/right | space  : stop\r")
         print("o/p : increase/decrease step size by 10%\r")
         print("\nCTRL-C or '0' to quit\r")
-        print("=" * 30 + "\r")
+        print("=" * 43 + "\r")
 
     def update_display(self):
         """Update step size in place without adding new lines"""

@@ -36,7 +36,7 @@ class ArmTeleop:
     def print_terminal_instructions(self):
         """Print static instructions to the terminal"""
         os.system('clear' if os.name == 'posix' else 'cls')
-        print("\n=== Robot Arm Teleop Controls ===")
+        print("\n" + "="*10 + " Robot Arm Teleop Controls " + "="*10 + "\r")
         
         print("\nJoint Controls (±165° for joints 1-5, ±175° for joint 6):")
         print("   q/w : Joint 1 L/R")
@@ -56,7 +56,7 @@ class ArmTeleop:
         print("\nCTRL-C or 0 to quit")
         
         # Reserve space for dynamic updates
-        print("\n" + "=" * 40)
+        print("\n" + "=" * 43 + "\r")
 
     def update_display(self):
         """Update step size and speed in place without adding new lines"""
