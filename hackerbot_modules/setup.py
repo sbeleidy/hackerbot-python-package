@@ -25,6 +25,13 @@ setup(
     packages=find_packages(),
     install_requires=[
         "pyserial",
+        "os",
+        "json",
+        "collections",
+        "threading",
+        "serial.tools.list_ports",
+        "time",
+        "logging",        
     ],
 
 )
