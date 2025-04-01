@@ -8,7 +8,7 @@
 # Created:    April 2025
 # Updated:    2025.04.01
 #
-# This script prints the Hackerbot logo to the console.
+# This script is a playground for testing the hackerbot_helper package.
 #
 # Special thanks to the following for their code contributions to this codebase:
 # Allen Chien - https://github.com/AllenChienXXX
