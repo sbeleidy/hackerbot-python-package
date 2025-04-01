@@ -1,3 +1,20 @@
+################################################################################
+# Copyright (c) 2025 Hackerbot Industries LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+#
+# Created By: Allen Chien
+# Created:    April 2025
+# Updated:    2025.04.01
+#
+# This script prints the Hackerbot logo to the console.
+#
+# Special thanks to the following for their code contributions to this codebase:
+# Allen Chien - https://github.com/AllenChienXXX
+################################################################################
+
+
 from .main_controller import MainController
 import time
 import logging
@@ -25,6 +42,8 @@ class ProgrammedController(MainController):
 
         except Exception as e:
             self.log_error(f"Error initializing ProgrammedController: {e}")
+
+################# BASE COMMANDS #################
 
     # Get ping response, check if main controller and temperature sensor are attached
     def get_ping(self):

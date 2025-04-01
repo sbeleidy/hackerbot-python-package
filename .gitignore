@@ -1,8 +1,7 @@
-venv/
-__pycache__/
-build/
-dist/
-*.egg-info/
-*.pyc
-*.pyo
-*.log
+hackerbot_modules/build/
+hackerbot_modules/dist/
+hackerbot_modules/*.egg-info/
+hackerbot_modules/*.pyc
+hackerbot_modules/*.pyo
+hackerbot_modules/*.log
+hackerbot_modules/__pycache__/

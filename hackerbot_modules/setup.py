@@ -20,6 +20,8 @@ from setuptools import setup, find_packages
 setup(
     name="hackerbot_helper",
     version="0.1",
+    license="MIT",
+    license_files=["LICENSE"],
     packages=find_packages(),
     install_requires=[
         "pyserial",
