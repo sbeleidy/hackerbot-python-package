@@ -20,17 +20,18 @@ name = "hackerbot_helper"
 version = "0.1"
 description = "This module contains the setup for the hackerbot_helper package."
 authors = [
-  { name = "Allen Chien", email = "achien4@wisc.edu" }
+  { name = "Allen Chien", email = "allen71090@gmail.com" }
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.11"
 dependencies = [
-  "pyserial"
+  "pyserial",
+  "pytest",
 ]
 
 [project.urls]
-Homepage = "https://github.com/AllenChienXXX"
+Homepage = "https://github.com/hackerbotindustries"
 
 [build-system]
 requires = ["setuptools>=61.0"]
