@@ -8,7 +8,9 @@
 # Created:    April 2025
 # Updated:    2025.04.01
 #
-# This script prints the Hackerbot logo to the console.
+# This module contains the SerialHelper class, which is a base class does the 
+# serial handling. Including sending serial commands, finding serial ports
+# reading serial outputs.
 #
 # Special thanks to the following for their code contributions to this codebase:
 # Allen Chien - https://github.com/AllenChienXXX
@@ -22,7 +24,7 @@ import os
 import json
 from collections import deque
 
-class MainController:
+class SerialHelper:
     HOME_DIR = os.environ['HOME']
 
     LOG_FILE_PATH = os.path.join(HOME_DIR, "hackerbot/logs/serial_log.txt")

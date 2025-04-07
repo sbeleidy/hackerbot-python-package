@@ -8,7 +8,7 @@
 # Created:    April 2025
 # Updated:    2025.04.01
 #
-# This module contains the setup for the hackerbot_helper package.
+# This module contains the setup details for the hackerbot python package.
 #
 # Special thanks to the following for their code contributions to this codebase:
 # Allen Chien - https://github.com/AllenChienXXX
@@ -16,9 +16,9 @@
 
 
 [project]
-name = "hackerbot_helper"
-version = "0.1"
-description = "This module contains the setup for the hackerbot_helper package."
+name = "hackerbot"
+version = "0.2"
+description = "This module contains the setup for the hackerbot python package."
 authors = [
   { name = "Allen Chien", email = "allen71090@gmail.com" }
 ]
@@ -31,12 +31,14 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/hackerbotindustries"
+Homepage = "https://github.com/hackerbotindustries/hackerbot-python-package"
 
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools.packages.find]
-include = ["testing", "hackerbot_helper"]
+[tool.setuptools]
+package-dir = {"" = "src"}
 
+[tool.setuptools.packages.find]
+where = ["src"]

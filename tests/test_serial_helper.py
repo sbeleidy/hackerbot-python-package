@@ -8,7 +8,7 @@
 # Created:    April 2025
 # Updated:    2025.04.01
 #
-# This module contains the tests for the MainController class.
+# This module contains the tests for the SerialHelper class.
 #
 # Special thanks to the following for their code contributions to this codebase:
 # Allen Chien - https://github.com/AllenChienXXX
@@ -21,23 +21,23 @@ import serial
 import os
 import json
 import threading
-import time
-from hackerbot_helper.main_controller import MainController
+import timew
+from hackerbot.utils.serial_helper import SerialHelper
 
-class TestMainController(unittest.TestCase):
+class TestSerialHelper(unittest.TestCase):
     
 #### INITIALIZATION TESTS
     @patch('serial.Serial')
     def test_init_success(self, mock_serial):
         mock_serial.return_value.is_open = True
-        controller = MainController(port='/dev/ttyACM1') # provide the right port
+        controller = SerialHelper(port='/dev/ttyACM1') # provide the right port
         self.assertEqual(controller.port, '/dev/ttyACM1')
         self.assertTrue(controller.ser.is_open)
 
     @patch('serial.Serial', side_effect=serial.SerialException("Serial error"))
     def test_init_serial_exception(self, mock_serial):
         with self.assertRaises(ConnectionError) as cm:
-            MainController(port='/dev/ttyUSB0') # provide the wrong port
+            SerialHelper(port='/dev/ttyUSB0') # provide the wrong port
         self.assertIn("Serial connection error", str(cm.exception))
 
 ##### SERIAL TESTS
@@ -46,7 +46,7 @@ class TestMainController(unittest.TestCase):
     @patch('serial.tools.list_ports.comports', return_value=[])
     def test_find_port_no_device(self, mock_ports):
         with self.assertRaises(ConnectionError) as cm:
-            controller = MainController()       
+            controller = SerialHelper()       
             controller.find_port()
             self.assertIn(f"No {controller.board} port found", str(cm.exception))
 
@@ -65,7 +65,7 @@ class TestMainController(unittest.TestCase):
         with patch('serial.Serial') as mock_serial:
             mock_serial.return_value.is_open = True
             
-            controller = MainController()
+            controller = SerialHelper()
             port = controller.find_port()
             
             # Assert that the correct port is returned
@@ -78,7 +78,7 @@ class TestMainController(unittest.TestCase):
     def test_send_raw_command_success(self, mock_serial):
         mock_serial.return_value.is_open = True
         mock_serial.return_value.write = MagicMock()
-        controller = MainController(port='/dev/ttyUSB0')
+        controller = SerialHelper(port='/dev/ttyUSB0')
         controller.send_raw_command("PING")
         mock_serial.return_value.write.assert_called_with(b'PING\r\n')
         self.assertEqual(controller.get_state(), "PING")
@@ -86,7 +86,7 @@ class TestMainController(unittest.TestCase):
     @patch('serial.Serial')
     def test_send_raw_command_closed_port(self, mock_serial):
         mock_serial.return_value.is_open = False
-        controller = MainController(port='/dev/ttyUSB0')
+        controller = SerialHelper(port='/dev/ttyUSB0')
         with self.assertRaises(ConnectionError):
             controller.send_raw_command("PING")
 
@@ -94,7 +94,7 @@ class TestMainController(unittest.TestCase):
 
     @patch("serial.Serial", autospec=True)  # Mock Serial to prevent real connection
     def test_get_json_from_command_found(self, mock_serial):
-        controller = MainController(port="/dev/MOCK_PORT")
+        controller = SerialHelper(port="/dev/MOCK_PORT")
 
         controller.json_entries.append({"command": "TEST", "success": "true"})
         result = controller.get_json_from_command("TEST")
@@ -102,27 +102,27 @@ class TestMainController(unittest.TestCase):
 
     @patch("serial.Serial", autospec=True)  # Mock Serial to prevent real connection
     def test_get_json_from_command_not_found(self, mock_serial):
-        controller = MainController(port="/dev/MOCK_PORT")
+        controller = SerialHelper(port="/dev/MOCK_PORT")
         with self.assertRaises(Exception):
             controller.get_json_from_command("UNKNOWN")
 
     @patch("serial.Serial", autospec=True)  # Mock Serial to prevent real connection
     def test_get_json_from_command_no_entries(self, mock_serial):
-        controller = MainController(port="/dev/MOCK_PORT")
+        controller = SerialHelper(port="/dev/MOCK_PORT")
         with self.assertRaises(ValueError):
             controller.get_json_from_command()
 
 ##### STATE AND ERROR TESTS 
     @patch("serial.Serial", autospec=True)  # Mock Serial to prevent real connection
     def test_get_state(self, mock_serial):
-        controller = MainController(port="/dev/MOCK_PORT")
+        controller = SerialHelper(port="/dev/MOCK_PORT")
 
         controller.state = "PING"
         self.assertEqual(controller.get_state(), "PING")
 
     @patch("serial.Serial", autospec=True)  # Mock Serial to prevent real connection
     def test_get_ser_error(self, mock_serial):
-        controller = MainController(port="/dev/MOCK_PORT")
+        controller = SerialHelper(port="/dev/MOCK_PORT")
         controller.ser_error = "ERROR"
         self.assertEqual(controller.get_ser_error(), "ERROR")
 
@@ -132,7 +132,7 @@ class TestMainController(unittest.TestCase):
     def test_disconnect_serial(self, mock_serial):
         mock_serial.return_value.is_open = True
         mock_serial.return_value.close = MagicMock()
-        controller = MainController(port='/dev/MOCK_PORT')
+        controller = SerialHelper(port='/dev/MOCK_PORT')
         controller.disconnect_serial()
         mock_serial.return_value.close.assert_called_once()
     
@@ -148,7 +148,7 @@ class TestMainController(unittest.TestCase):
         mock_serial.return_value.readline = MagicMock(return_value=b'{"command": "MOVE", "success": "true"}\n')
 
         # Create controller instance
-        controller = MainController(port='/dev/ttyUSB0')
+        controller = SerialHelper(port='/dev/ttyUSB0')
         controller.LOG_FILE_PATH = "/mock/path/log.txt"  # Set a mock path
         controller.read_thread_stop_event.set()  # Stop thread immediately
         controller.read_serial()  # Call the function directly
@@ -168,7 +168,7 @@ class TestMainController(unittest.TestCase):
         mock_serial_instance = MagicMock()
         mock_serial.return_value = mock_serial_instance
     
-        controller = MainController(port="/dev/MOCK_PORT")
+        controller = SerialHelper(port="/dev/MOCK_PORT")
         # Let the thread run briefly
         time.sleep(0.5)
         # Stop the thread and clean up
@@ -180,14 +180,14 @@ class TestMainController(unittest.TestCase):
 
     @patch('serial.Serial')
     def test_thread_safety(self, mock_serial):
-        controller = MainController(port="/dev/MOCK_PORT")
+        controller = SerialHelper(port="/dev/MOCK_PORT")
         with controller.lock:
             controller.state = "LOCKED_TEST"
         self.assertEqual(controller.get_state(), "LOCKED_TEST")
     
     @patch('serial.Serial')
     def test_stop_read_thread(self, mock_serial):
-        controller = MainController(port='/dev/ttyUSB0')
+        controller = SerialHelper(port='/dev/ttyUSB0')
         controller.stop_read_thread()
         self.assertTrue(controller.read_thread_stop_event.is_set())
         self.assertFalse(controller.read_thread.is_alive())

@@ -15,11 +15,11 @@
 ################################################################################
 
 
-from .main_controller import MainController
+from .serial_helper import SerialHelper
 import time
 import logging
 
-class ProgrammedController(MainController):
+class ProgrammedController(SerialHelper):
     def __init__(self, port=None, board=None, verbose_mode=False):
         self.error_msg = ""
         self.warning_msg = ""
@@ -440,5 +440,3 @@ class ProgrammedController(MainController):
         except Exception as e:
             self.log_error(f"Error in stop_controller: {e}")
             return False
-        
-        
