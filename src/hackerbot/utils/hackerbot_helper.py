@@ -6,9 +6,10 @@
 #
 # Created By: Allen Chien
 # Created:    April 2025
-# Updated:    2025.04.01
+# Updated:    2025.04.07
 #
-# This module contains the ProgrammedController class, which is a subclass of MainController.
+# This module contains the HackerbotHelper class, which is a subclass of SerialHelper.
+# It contains the fields that will be share among higher level classes.
 #
 # Special thanks to the following for their code contributions to this codebase:
 # Allen Chien - https://github.com/AllenChienXXX
@@ -19,7 +20,7 @@ from .serial_helper import SerialHelper
 import time
 import logging
 
-class ProgrammedController(SerialHelper):
+class HackerbotHelper(SerialHelper):
     def __init__(self, port=None, board=None, verbose_mode=False):
         self.error_msg = ""
         self.warning_msg = ""

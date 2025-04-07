@@ -6,7 +6,7 @@
 #
 # Created By: Allen Chien
 # Created:    April 2025
-# Updated:    2025.04.01
+# Updated:    2025.04.07
 #
 # This module contains the tests for the SerialHelper class.
 #

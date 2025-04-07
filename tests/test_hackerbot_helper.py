@@ -6,7 +6,7 @@
 #
 # Created By: Allen Chien
 # Created:    April 2025
-# Updated:    2025.04.01
+# Updated:    2025.04.07
 #
 # This module contains the tests for the ProgrammedController class.
 #
@@ -19,8 +19,8 @@ import unittest
 from unittest.mock import patch, MagicMock, call
 import time
 import logging
-from hackerbot_helper.main_controller import MainController
-from hackerbot_helper.programmed_controller import ProgrammedController
+from hackerbot.serial_helper import SerialHelper
+from hackerbot.hackerbot_helper import HackerbotHelper
 
 class TestProgrammedController(unittest.TestCase):    
         
