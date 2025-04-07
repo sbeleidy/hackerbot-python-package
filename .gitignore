@@ -1,6 +1,6 @@
 hackerbot_modules/build/
 hackerbot_modules/dist/
-hackerbot_modules/hackerbot_helper/*.egg-info/
+hackerbot_modules/hackerbot_helper/.egg-info/
 hackerbot_modules/hackerbot_helper/*.pyc
 hackerbot_modules/hackerbot_helper/*.pyo
 hackerbot_modules/hackerbot_helper/*.log

@@ -1,4 +1,4 @@
-setup.py
+pyproject.toml
 hackerbot_helper/__init__.py
 hackerbot_helper/main_controller.py
 hackerbot_helper/programmed_controller.py
@@ -7,3 +7,5 @@ hackerbot_helper.egg-info/SOURCES.txt
 hackerbot_helper.egg-info/dependency_links.txt
 hackerbot_helper.egg-info/requires.txt
 hackerbot_helper.egg-info/top_level.txt
+tests/test_main_controller.py
+tests/test_programmed_controller.py
