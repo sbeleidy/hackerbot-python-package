@@ -3,6 +3,7 @@ Name: hackerbot_helper
 Version: 0.1
 Summary: This module contains the setup for the hackerbot_helper package.
 Author-email: Allen Chien <allen71090@gmail.com>
+License-Expression: MIT
 Project-URL: Homepage, https://github.com/hackerbotindustries
 Requires-Python: >=3.11
 Description-Content-Type: text/markdown
