@@ -143,16 +143,6 @@ class HackerbotHelper(SerialHelper):
         if not self._driver_mode:
             raise Exception("Not in driver mode.")
         
-    def check_head_control(self):
-        if not self._audio_mouth_eyes_attached:
-            raise Exception("Audio mouth and eyes not attached, can't control head.")
-        if not self._dynamixel_controller_attached:
-            raise Exception("Dynamixel controller not attached, can't control head.")
-
-    def check_arm_control(self):
-        if not self._arm_attached:
-            raise Exception("Arm not attached, can't control arm.")
-        
     def destroy(self):
         try:
             super().disconnect_serial()
