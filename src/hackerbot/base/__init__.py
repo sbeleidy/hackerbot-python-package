@@ -16,9 +16,10 @@
 
 
 from hackerbot.utils.hackerbot_helper import HackerbotHelper
+from .maps import Maps
 import time
 
-class Base(HackerbotHelper):    
+class Base():    
     def __init__(self, controller: HackerbotHelper):
         """
         Initialize Core component with HackerbotHelper object
@@ -26,8 +27,9 @@ class Base(HackerbotHelper):
         :param controller: HackerbotHelper object
         """
         self._controller = controller
-
         self.initialize() # Call before any action is done on the base
+
+        self.maps = Maps(controller)
       
     def initialize(self):
         try:
@@ -36,7 +38,7 @@ class Base(HackerbotHelper):
             # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
-            self._controller.log_error(f"Error in initialize: {e}")
+            self._controller.log_error(f"Error in base:initialize: {e}")
             raise Exception(f"Error in initialize: {e}")
         
     def set_mode(self, mode):
@@ -45,7 +47,7 @@ class Base(HackerbotHelper):
             # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
-            self._controller.log_error(f"Error in set_mode: {e}")
+            self._controller.log_error(f"Error in base:set_mode: {e}")
             return False
         
     def status(self):
@@ -54,7 +56,7 @@ class Base(HackerbotHelper):
             # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
-            self._controller.log_error(f"Error in status: {e}")
+            self._controller.log_error(f"Error in base:status: {e}")
             return False
         
     def position(self):
@@ -63,7 +65,7 @@ class Base(HackerbotHelper):
             # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
-            self._controller.log_error(f"Error in position: {e}")
+            self._controller.log_error(f"Error in base:position: {e}")
             return False
         
     def start(self):
@@ -72,7 +74,7 @@ class Base(HackerbotHelper):
             # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
-            self._controller.log_error(f"Error in leave_base: {e}")
+            self._controller.log_error(f"Error in base:start: {e}")
             return False
         
     def quickmap(self):
@@ -91,7 +93,7 @@ class Base(HackerbotHelper):
             # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
-            self._controller.log_error(f"Error in quickmap: {e}")
+            self._controller.log_error(f"Error in base:quickmap: {e}")
             return False
         
     def dock(self):
@@ -110,7 +112,7 @@ class Base(HackerbotHelper):
             # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
-            self._controller.log_error(f"Error in dock: {e}")
+            self._controller.log_error(f"Error in base:dock: {e}")
             return False
 
 
@@ -126,7 +128,7 @@ class Base(HackerbotHelper):
             # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
-            self._controller.log_error(f"Error in stop_driver: {e}")
+            self._controller.log_error(f"Error in base:stop_driver: {e}")
             return False
         
     def trigger_bump(self, left, right):
@@ -137,12 +139,14 @@ class Base(HackerbotHelper):
         :param right: 0 or 1 to disable or enable the right bump sensor.
         :return: True if the command is successful, False if it fails.
         """
+        left = 1 if True else 0
+        right = 1 if True else 0
         try:
             self._controller.send_raw_command("B_BUMP, {0}, {1}".format(left, right))
             # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
-            self._controller.log_error(f"Error in trigger_bump: {e}")
+            self._controller.log_error(f"Error in base:trigger_bump: {e}")
             return False
         
     def drive(self, l_vel, a_vel):
@@ -155,25 +159,28 @@ class Base(HackerbotHelper):
         """
         try:
             self._controller.send_raw_command(f"B_DRIVE,{l_vel},{a_vel}")
-            time.sleep(1)
+            time.sleep(0.1)
             response = self._controller.get_json_from_command("drive")
             if response is None:
                 raise Exception("Drive command failed")
             return True
         except Exception as e:
-            self._controller.log_error(f"Error in move: {e}")
+            self._controller.log_error(f"Error in base:drive: {e}")
             return False
         
-    def destroy(self):
+    def destroy(self, auto_dock=False):
         """
-        Stop the base, and destroy the controller object.
+        Clean up and shut down the base.
 
-        Note: This method will stop the robot base, and then destroy the
-        controller object. This is a convenience method that is meant to be
-        called when the Hackerbot object is no longer needed.
+        This method kills the base's movement and optionally docks it before 
+        destroying the controller. If `auto_dock` is set to True, the base will 
+        dock before the destruction process.
 
-        Returns:
-            bool: True if both operations are successful, False if either fails.
+        :param auto_dock: If True, the base will dock before being destroyed. Defaults to False.
         """
         self.kill()
+        time.sleep(1.5)
+        if auto_dock:
+            print("Docking")
+            self.dock()
         self._controller.destroy()

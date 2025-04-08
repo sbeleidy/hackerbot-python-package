@@ -19,7 +19,7 @@ from hackerbot.utils.hackerbot_helper import HackerbotHelper
 import time
 import json
 
-class Core(HackerbotHelper):    
+class Core():    
     def __init__(self, controller: HackerbotHelper):
         """
         Initialize Core component with HackerbotHelper object
@@ -90,7 +90,7 @@ class Core(HackerbotHelper):
             return json.dumps(robots_state, indent=2)
 
         except Exception as e:
-            self._controller.log_error(f"Error in ping: {e}")
+            self._controller.log_error(f"Error in core:ping: {e}")
             return None
 
 
@@ -114,6 +114,6 @@ class Core(HackerbotHelper):
             return json.dumps(version_info, indent=2)
 
         except Exception as e:
-            self._controller.log_error(f"Error in versions: {e}")
+            self._controller.log_error(f"Error in core:versions: {e}")
             return None
             
