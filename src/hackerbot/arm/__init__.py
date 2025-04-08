@@ -18,7 +18,7 @@
 from hackerbot.utils.hackerbot_helper import HackerbotHelper
 from .gripper import Gripper
 
-class Head():
+class Arm():
     def __init__(self, controller: HackerbotHelper):
         self._controller = controller
         self.idle_mode = True

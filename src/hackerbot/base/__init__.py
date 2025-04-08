@@ -72,6 +72,7 @@ class Base():
         try:
             self._controller.send_raw_command("B_START")
             # Not fetching json response since machine mode not implemented
+            self._controller._driver_mode = True
             return True
         except Exception as e:
             self._controller.log_error(f"Error in base:start: {e}")
@@ -158,6 +159,9 @@ class Base():
         :return: True if the command is successful, False if it fails.
         """
         try:
+            if not self._controller._driver_mode:
+                self.start()
+                time.sleep(2)
             self._controller.send_raw_command(f"B_DRIVE,{l_vel},{a_vel}")
             time.sleep(0.1)
             response = self._controller.get_json_from_command("drive")

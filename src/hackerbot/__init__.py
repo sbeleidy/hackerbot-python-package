@@ -6,21 +6,21 @@
 #
 # Created By: Allen Chien
 # Created:    April 2025
-# Updated:    2025.04.01
+# Updated:    2025.04.08
 #
-# This is the __init__.py file for the hackerbot_helper package. It imports
-# and initialized the main Hackerbot class
+# This is the file for the hackerbot package. It imports
+# and initialized the sub components
 #
 # Special thanks to the following for their code contributions to this codebase:
 # Allen Chien - https://github.com/AllenChienXXX
 ################################################################################
 
 
-from hackerbot.core import Core
-from hackerbot.base import Base
-from hackerbot.head import Head
-# from hackerbot.arm import Arm
-from hackerbot.utils.hackerbot_helper import HackerbotHelper
+from .core import Core
+from .base import Base
+from .head import Head
+from .arm import Arm
+from .utils.hackerbot_helper import HackerbotHelper
 
 class Hackerbot(HackerbotHelper):
     def __init__(self, port=None, board=None, model=None,verbose_mode=False):
@@ -29,5 +29,5 @@ class Hackerbot(HackerbotHelper):
         self.core = Core(controller=self)
         self.base = Base(controller=self)
         self.head = Head(controller=self)
-        # self.arm = Arm(controller=self)
+        self.arm = Arm(controller=self)
         # TODO based on model decide which subsystems to initialize

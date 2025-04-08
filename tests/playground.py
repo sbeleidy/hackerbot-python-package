@@ -18,6 +18,5 @@ def main():
         time.sleep(5)
         bot.base.destroy(auto_dock=True)
 
-
 if __name__ == "__main__":
     main()
