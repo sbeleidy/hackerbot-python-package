@@ -31,7 +31,16 @@ class Core(HackerbotHelper):
 
         self._controller = controller
 
+        self.ping() # Ping to check attached components
+
     def ping(self):
+        """
+        Pings the main controller to check component statuses and returns a JSON-style string
+        indicating the status of the components.
+        This is called during set up.
+
+        :return: JSON-style string of component statuses or None if there is an error
+        """
         try:
             self._controller.check_controller_init()
             self._controller.send_raw_command("PING")
@@ -54,11 +63,20 @@ class Core(HackerbotHelper):
             # Check component statuses
             self._controller._main_controller_attached = response.get("main_controller") == "attached"
             self._controller._temperature_sensor_attached = response.get("temperature_sensor") == "attached"
-            self._controller._left_tof_attached = response.get("left_tofs") == "attached"
-            self._controller._right_tof_attached = response.get("right_tofs") == "attached"
+            self._controller._left_tof_attached = response.get("left_tof") == "attached"
+            self._controller._right_tof_attached = response.get("right_tof") == "attached"
             self._controller._audio_mouth_eyes_attached = response.get("audio_mouth_eyes") == "attached"
             self._controller._dynamixel_controller_attached = response.get("dynamixel_controller") == "attached"
             self._controller._arm_attached = response.get("arm_controller") == "attached"
+
+            if not self._controller._main_controller_attached:
+                self._controller.log_warning("Main controller not attached")
+            if not self._controller._temperature_sensor_attached:
+                self._controller.log_warning("Temperature sensor not attached")
+            if not self._controller._left_tof_attached:
+                self._controller.log_warning("Left TOF not attached")
+            if not self._controller._right_tof_attached:
+                self._controller.log_warning("Right TOF not attached")
 
             # Update status
             robots_state["main_controller_attached"] = self._controller._main_controller_attached

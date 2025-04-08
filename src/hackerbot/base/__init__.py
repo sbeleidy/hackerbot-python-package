@@ -1,3 +1,20 @@
+################################################################################
+# Copyright (c) 2025 Hackerbot Industries LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+#
+# Created By: Allen Chien
+# Created:    April 2025
+# Updated:    2025.04.08
+#
+# This module contains the Base component of the hackerbot
+#
+# Special thanks to the following for their code contributions to this codebase:
+# Allen Chien - https://github.com/AllenChienXXX
+################################################################################
+
+
 from hackerbot.utils.hackerbot_helper import HackerbotHelper
 import time
 
@@ -9,6 +26,8 @@ class Base(HackerbotHelper):
         :param controller: HackerbotHelper object
         """
         self._controller = controller
+
+        self.initialize() # Call before any action is done on the base
       
     def initialize(self):
         try:
@@ -18,7 +37,7 @@ class Base(HackerbotHelper):
             return True
         except Exception as e:
             self._controller.log_error(f"Error in initialize: {e}")
-            return False
+            raise Exception(f"Error in initialize: {e}")
         
     def set_mode(self, mode):
         try:
@@ -31,7 +50,6 @@ class Base(HackerbotHelper):
         
     def status(self):
         try:
-            self._controller.check_system()
             self._controller.send_raw_command("B_STATUS")
             # Not fetching json response since machine mode not implemented
             return True

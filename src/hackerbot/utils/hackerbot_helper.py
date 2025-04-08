@@ -43,7 +43,6 @@ class HackerbotHelper(SerialHelper):
         self._audio_mouth_eyes_attached = False
         self._dynamixel_controller_attached = False
 
-        self._head_attached = False
         self._arm_attached = False
         
         self._port = port
@@ -53,6 +52,15 @@ class HackerbotHelper(SerialHelper):
 
 
     def setup(self):
+        """
+        Initialize the main controller.
+
+        If self._port and self._board are None, this method will find the first available serial port and use it to initialize the main controller.
+        Otherwise, it will use the provided port and board to initialize.
+        After initialization, it will set the main controller to JSON mode and enable the TOFs.
+        This setup ensures json mode are set and controller is initialized properly.
+        If an exception occurs during initialization, it will raise an exception with the error message.
+        """
         try:
             if self._port is None or self._board is None:
                 super().__init__()
@@ -121,31 +129,34 @@ class HackerbotHelper(SerialHelper):
     def check_controller_init(self):
         if not self._main_controller_init:
             raise Exception("Main controller not initialized.")
+        if not self._json_mode:
+            raise Exception("JSON mode not enabled.")
         
     def check_base_init(self):
+        """
+        Check if base is initialized and prevent any base commands from being sent.
+        """
         if not self._base_init:
             raise Exception("Base not initialized.")
-        if not self.json_mode:
-            self.log_warning("JSON mode not enabled.")
-            raise Exception("JSON mode not enabled.")
 
     def check_driver_mode(self):
         if not self._driver_mode:
             raise Exception("Not in driver mode.")
         
     def check_head_control(self):
-        if not self._head_control:
-            raise Exception("Head not attached, can't control head.")
+        if not self._audio_mouth_eyes_attached:
+            raise Exception("Audio mouth and eyes not attached, can't control head.")
+        if not self._dynamixel_controller_attached:
+            raise Exception("Dynamixel controller not attached, can't control head.")
 
     def check_arm_control(self):
-        if not self._arm_control:
+        if not self._arm_attached:
             raise Exception("Arm not attached, can't control arm.")
         
     def destroy(self):
         try:
             super().disconnect_serial()
-            # self.base_initialized = False
-            # self.driver_initialized = False
+            self._main_controller_init = False
             return True
         except Exception as e:
             self.log_error(f"Error in destroy: {e}")
