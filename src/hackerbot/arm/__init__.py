@@ -1,3 +1,20 @@
+################################################################################
+# Copyright (c) 2025 Hackerbot Industries LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+#
+# Created By: Allen Chien
+# Created:    April 2025
+# Updated:    2025.04.07
+#
+# This module contains the Arm component of the hackerbot
+#
+# Special thanks to the following for their code contributions to this codebase:
+# Allen Chien - https://github.com/AllenChienXXX
+################################################################################
+
+
 from hackerbot.utils.hackerbot_helper import HackerbotHelper
 from .gripper import Gripper
 
@@ -30,7 +47,7 @@ class Head():
             # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
-            self.log_error(f"Error in arm:move_joint: {e}")
+            self._controller.log_error(f"Error in arm:move_joint: {e}")
             return False
     
     def move_joints(self, j_agl_1, j_agl_2, j_agl_3, j_agl_4, j_agl_5, j_agl_6, speed):
@@ -54,7 +71,7 @@ class Head():
             # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
-            self.log_error(f"Error in arm:move_joints: {e}")
+            self._controller.log_error(f"Error in arm:move_joints: {e}")
             return False    
             
             
