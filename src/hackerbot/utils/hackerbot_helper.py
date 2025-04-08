@@ -86,12 +86,6 @@ class HackerbotHelper(SerialHelper):
             self.tofs = True
         except Exception as e:
             raise Exception(f"Error in enable TOFs: {e}")
-        
-    def kill_robot(self):
-        try:
-            super().send_raw_command("B_KILL")
-        except Exception as e:
-            raise Exception(f"Error in kill_robot: {e}")
 
     def get_current_action(self):
         return super().get_state()
@@ -143,7 +137,6 @@ class HackerbotHelper(SerialHelper):
         
     def destroy(self):
         try:
-            self.kill_robot()
             super().disconnect_serial()
             self.base_initialized = False
             self.driver_initialized = False
