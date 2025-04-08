@@ -18,16 +18,16 @@
 
 from hackerbot.core import Core
 from hackerbot.base import Base
+from hackerbot.head import Head
 # from hackerbot.arm import Arm
-# from hackerbot.head import Head
 from hackerbot.utils.hackerbot_helper import HackerbotHelper
 
 class Hackerbot(HackerbotHelper):
-    def __init__(self, port=None, board=None, verbose_mode=False):
+    def __init__(self, port=None, board=None, model=None,verbose_mode=False):
         super().__init__(port, board, verbose_mode)
-
         # Share self (which is a HackerbotHelper) with subsystems
         self.core = Core(controller=self)
         self.base = Base(controller=self)
+        self.head = Head(controller=self)
         # self.arm = Arm(controller=self)
-        # self.head = Head(controller=self)
+        # TODO based on model decide which subsystems to initialize
