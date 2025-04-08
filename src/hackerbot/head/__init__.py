@@ -1,4 +1,5 @@
 from hackerbot.utils.hackerbot_helper import HackerbotHelper
+from .eyes import Eyes
 
 class Head():
     def __init__(self, controller: HackerbotHelper):
@@ -6,12 +7,15 @@ class Head():
         self.idle_mode = True
 
         self.setup()
+        self.eyes = Eyes(self._controller)
 
     def setup(self):
-        if not self._controller._audio_mouth_eyes_attached:
-            self._controller.log_warning("Audio mouth and eyes not attached, can't control head.")
         if not self._controller._dynamixel_controller_attached:
             self._controller.log_warning("Dynamixel controller not attached, can't control head.")
+        if not self._controller._audio_mouth_eyes_attached:
+            self._controller.log_warning("Audio mouth and eyes not attached, can't control eyes.")
+
+        self.set_idle_mode(True)
         
     def look(self, yaw, pitch, speed):
         try:
