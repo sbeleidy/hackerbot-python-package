@@ -6,40 +6,40 @@ class Maps():
         self._controller = controller
 
     # Returns a string of map data
-    def get_map(self, map_id):
+    def fetch(self, map_id):
         try:
             # Check if controller and driver are initialized and in machine mode
-            command = f"GETMAP,{map_id}"
+            command = f"B_MAPDATA,{map_id}"
             self._controller.send_raw_command(command)
             time.sleep(5)  # Wait for map to be generated
-            map_data_json = self._controller.get_json_from_command("getmap")
+            map_data_json = self._controller.get_json_from_command("mapdata")
             if map_data_json is None:
-                raise Exception("No map from main controller")
+                raise Exception("No map {map_id} found")
             return map_data_json.get("compressedmapdata")
         except Exception as e:
-            self.log_error(f"Error in get_map: {e}")
+            self.log_error(f"Error in maps:fetch: {e}")
             return None
     
     # Returns a list of map ids
-    def get_map_list(self):
+    def list(self):
         try:
             # Check if controller and driver are initialized and in machine mode
-            self._controller.send_raw_command("GETML")
+            self._controller.send_raw_command("B_MAPLIST")
             time.sleep(2)  # Wait for map list to be generated
-            map_list_json = self._controller.get_json_from_command("getml")
+            map_list_json = self._controller.get_json_from_command("maplist")
             if map_list_json is None:
-                raise Exception("No map list from main controller")
+                raise Exception("No maps found")
             return map_list_json.get("map_ids")
         except Exception as e:
-            self.log_error(f"Error in get_map_list: {e}")
+            self.log_error(f"Error in maps:list: {e}")
             return None
 
-    def goto_pos(self, x_coord, y_coord, angle, speed):
+    def goto(self, x, y, angle, speed):
         try:
-            command = f"GOTO,{x_coord},{y_coord},{angle},{speed}"
+            command = f"B_GOTO,{x},{y},{angle},{speed}"
             self._controller.send_raw_command(command)
             # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
-            self.log_error(f"Error in goto_pos: {e}")
+            self.log_error(f"Error in maps:goto: {e}")
             return False
