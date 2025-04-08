@@ -8,7 +8,7 @@
 # Created:    April 2025
 # Updated:    2025.04.07
 #
-# This module contains the tests for the ProgrammedController class.
+# This module contains the unit tests for the HackerbotHelper class.
 #
 # Special thanks to the following for their code contributions to this codebase:
 # Allen Chien - https://github.com/AllenChienXXX
@@ -19,583 +19,108 @@ import unittest
 from unittest.mock import patch, MagicMock, call
 import time
 import logging
-from hackerbot.serial_helper import SerialHelper
-from hackerbot.hackerbot_helper import HackerbotHelper
+from hackerbot.utils.serial_helper import SerialHelper
+from hackerbot.utils.hackerbot_helper import HackerbotHelper
 
-class TestProgrammedController(unittest.TestCase):    
-        
-    def test_init_with_port_and_board(self):
-        with patch.object(MainController, '__init__', return_value= None):
-            controller = ProgrammedController(port='mock_port', board='mock_board', verbose_mode=True)
-            self.assertTrue(controller.controller_initialized)
-            self.assertEqual(controller.board, 'mock_board')
-            self.assertEqual(controller.port, 'mock_port')
-        
-    def test_init_without_port_and_board(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'get_board_and_port', return_value= ('mock_board', 'mock_port')):
-            
-            controller = ProgrammedController(verbose_mode=True)
-            self.assertTrue(controller.controller_initialized)
-            self.assertEqual(controller.board, 'mock_board')
-            self.assertEqual(controller.port, 'mock_port')
+class TestHackerbotHelper(unittest.TestCase):
 
-            
-    def test_get_ping_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached","temperature_sensor": "attached", "audio_mouth_eyes": "attached", "dynamixel_controller": "attached", "arm_controller": "attached"}):
-            controller = ProgrammedController(verbose_mode=True)
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            result = controller.get_ping()
-        
-            self.assertEqual(result, " | Main controller attached | Temperature sensor attached | Audio mouth and eyes attached | Dynamixel controller attached | Arm control attached")
-            self.assertTrue(controller.head_control)
-            self.assertTrue(controller.arm_control)
+    @patch('hackerbot.utils.hackerbot_helper.SerialHelper.__init__', return_value=None)
+    @patch('hackerbot.utils.hackerbot_helper.SerialHelper.get_board_and_port', return_value=("Uno", "/dev/ttyUSB0"))
+    def test_init_without_port_board(self, mock_get_board_and_port, mock_serial_init):
+        helper = HackerbotHelper()
+        self.assertTrue(helper._main_controller_init)
+        self.assertTrue(helper._json_mode)
+        self.assertEqual(helper._port, "/dev/ttyUSB0")
+        self.assertEqual(helper._board, "Uno")
 
-    def test_get_ping_main_controller_not_attached(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= {"temperature_sensor": "attached"}):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            result = controller.get_ping()
-            
-            self.assertIsNone(result)
-            self.assertIn("Error in get_ping", controller.error_msg)
-        
-    def test_get_ping_temperature_sensor_not_attached(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached"}):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            result = controller.get_ping()
-            
-            self.assertIsNone(result)
-            self.assertIn("Error in get_ping", controller.error_msg)
+    @patch('hackerbot.utils.hackerbot_helper.SerialHelper.__init__', return_value=None)
+    def test_init_with_port_board(self, mock_serial_init):
+        helper = HackerbotHelper(port="/dev/ttyUSB1", board="Mega")
+        self.assertEqual(helper._port, "/dev/ttyUSB1")
+        self.assertEqual(helper._board, "Mega")
 
-    def test_get_ping_audio_mouth_eyes_not_attached(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached", "temperature_sensor": "attached", "dynamixel_controller": "attached", "arm_controller": "attached"}):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.head_control = False
-            result = controller.get_ping()
+    @patch('hackerbot.base.hackerbot_helper.SerialHelper.send_raw_command')
+    @patch('hackerbot.base.hackerbot_helper.SerialHelper.get_json_from_command', return_value={"json_mode": True})
+    def test_set_json_mode_true(self, mock_get_json, mock_send_raw):
+        helper = HackerbotHelper(port="p", board="b")
+        helper.set_json_mode(True)
+        mock_send_raw.assert_called_with("JSON, 1")
+        self.assertTrue(helper._json_mode)
 
-            self.assertFalse(controller.head_control)
-            self.assertIn("Audio mouth and eyes not attached, Head will not move", controller.warning_msg)
+    @patch('hackerbot.base.hackerbot_helper.SerialHelper.get_json_from_command', return_value=None)
+    def test_set_json_mode_raises_if_fail(self, mock_get_json):
+        helper = HackerbotHelper(port="p", board="b")
+        with self.assertRaises(Exception) as ctx:
+            helper.set_json_mode(True)
+        self.assertIn("Error in set_json_mode", str(ctx.exception))
 
-    def test_get_ping_dynamixel_controller_not_attached(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached", "temperature_sensor": "attached", "audio_mouth_eyes": "attached", "arm_controller": "attached"}):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.head_control = True
-            result = controller.get_ping()
+    @patch('hackerbot.base.hackerbot_helper.SerialHelper.get_ser_error', return_value="serial failed")
+    def test_get_error_prioritizes_serial(self, mock_ser_error):
+        helper = HackerbotHelper(port="p", board="b")
+        helper._error_msg = "some error"
+        self.assertEqual(helper.get_error(), "serial failed")
 
-            self.assertFalse(controller.head_control)
-            self.assertIn("Dynamixel controller not attached, Head will not move", controller.warning_msg)
+    def test_get_error_fallback(self):
+        helper = HackerbotHelper(port="p", board="b")
+        helper._error_msg = "fallback error"
+        self.assertEqual(helper.get_error(), "fallback error")
 
-    def test_get_ping_arm_control_not_attached(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": "attached", "temperature_sensor": "attached", "audio_mouth_eyes": "attached", "dynamixel_controller": "attached"}):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.head_control = True
-            controller.arm_control = False
-            result = controller.get_ping()
+    def test_log_error_and_warning(self):
+        helper = HackerbotHelper(port="p", board="b", verbose_mode=False)
+        helper.log_error("uh oh")
+        self.assertEqual(helper._error_msg, "uh oh")
+        helper.log_warning("heads up")
+        self.assertEqual(helper._warning_msg, "heads up")
 
-            self.assertFalse(controller.arm_control)
-            self.assertIn("Arm control not attached, Arm will not move", controller.warning_msg)
-        
-    def test_get_versions_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= {"main_controller": 7}):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            
-            result = controller.get_versions()
-            self.assertEqual(result, "Main controller version: 7")
-        
-    def test_get_versions_failure(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= {}):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            
-            result = controller.get_versions()
-    
-        self.assertIsNone(result)
-        self.assertIn("Error in get_versions", controller.error_msg)
-        
+    def test_check_controller_init_raises(self):
+        helper = HackerbotHelper(port="p", board="b")
+        helper._main_controller_init = False
+        with self.assertRaises(Exception) as ctx:
+            helper.check_controller_init()
+        self.assertIn("Main controller not initialized", str(ctx.exception))
 
-    def test_activate_machine_mode_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= {"command": "machine", "success": "true"}):
-            controller = ProgrammedController(port="/dev/MOCK_PORT", board="mock_board", verbose_mode=True)
-            controller.driver_initialized = True
-            controller.machine_mode = False
-    
-            result = controller.activate_machine_mode()
-        
-            self.assertTrue(result)
-            self.assertTrue(controller.machine_mode)
-        
-    def test_activate_machine_mode_failure(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = False
-        
-            result = controller.activate_machine_mode()
-        
-            self.assertFalse(result)
-            self.assertFalse(controller.machine_mode)
-            self.assertIn("Error in activate_machine_mode", controller.error_msg)
+    def test_check_driver_mode_raises(self):
+        helper = HackerbotHelper(port="p", board="b")
+        helper._driver_mode = False
+        with self.assertRaises(Exception) as ctx:
+            helper.check_driver_mode()
+        self.assertIn("Not in driver mode", str(ctx.exception))
 
-    def test_deactivate_machine_mode_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            
-            result = controller.deactivate_machine_mode()
-            
-            self.assertTrue(result)
-            self.assertFalse(controller.machine_mode)
-        
-    def test_enable_tofs_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= {"command": "tofs", "success": "true"}):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            
-            result = controller.enable_TOFs()
-            
-            self.assertTrue(result)
+    def test_check_base_init_raises(self):
+        helper = HackerbotHelper(port="p", board="b")
+        helper._base_init = False
+        with self.assertRaises(Exception) as ctx:
+            helper.check_base_init()
+        self.assertIn("Base not initialized", str(ctx.exception))
 
-    def test_enable_tofs_failure(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            
-            result = controller.enable_TOFs()
-            
-            self.assertFalse(result)
-            self.assertIn("Error in enable TOFs", controller.error_msg)
-        
-    def test_disable_tofs_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= {"command": "tofs", "success": "true"}):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-        
-            result = controller.disable_TOFs()
-        
-            self.assertTrue(result)
-    
-    def test_disable_tofs_failure(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-        
-            result = controller.disable_TOFs()
-        
-            self.assertFalse(result)
-            self.assertIn("Error in disable TOFs", controller.error_msg)
-        
-    def test_init_driver_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = False
-            
-            result = controller.init_driver()
-            
-            self.assertTrue(result)
-            self.assertTrue(controller.driver_initialized)
-        
-    def test_leave_base_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
+    @patch('hackerbot.base.hackerbot_helper.SerialHelper.disconnect_serial', return_value=None)
+    def test_destroy_successful(self, mock_disconnect):
+        helper = HackerbotHelper(port="p", board="b")
+        result = helper.destroy()
+        self.assertTrue(result)
+        self.assertFalse(helper._main_controller_init)
 
-            result = controller.leave_base()
-        
-            self.assertTrue(result)
-        
-    def test_stop_driver_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
+    @patch('hackerbot.base.hackerbot_helper.SerialHelper.disconnect_serial', side_effect=Exception("fail"))
+    def test_destroy_failure_logs(self, mock_disconnect):
+        helper = HackerbotHelper(port="p", board="b")
+        result = helper.destroy()
+        self.assertFalse(result)
+        self.assertEqual(helper._error_msg, "Error in destroy: fail")
 
-            result = controller.stop_driver()
-            self.assertTrue(result)
-            self.assertFalse(controller.driver_initialized)
-        
-    def test_quickmap_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-
-            result = controller.quickmap()
-            self.assertTrue(result)
-        
-    def test_dock_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-
-            result = controller.dock()
-            self.assertTrue(result)
-        
-    def test_goto_pos_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-
-            result = controller.goto_pos(10, 20, 30, 40)
-            self.assertTrue(result)
-
-    def test_move_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-            patch.object(MainController, 'send_raw_command', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= {"command": "motor", "success": "true"}):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-
-            result = controller.move(10, 20)
-            self.assertTrue(result)
-
-    def test_move_failure(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-
-            result = controller.move(10, 20)
-            self.assertFalse(result)
-            self.assertIn("Error in move", controller.error_msg)
-            
-    def test_get_map_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= {"compressedmapdata": "map_data_content", "command": "getmap", "success": "true"}):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-        
-            result = controller.get_map(1)
-        
-            self.assertEqual(result, "map_data_content")
-        
-    def test_get_map_failure(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-        
-            result = controller.get_map(1)
-        
-            self.assertIsNone(result)
-            self.assertIn("Error in get_map", controller.error_msg)
-
-        
-    def test_get_map_list_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= {"map_ids": [1, 2, 3]}):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-        
-            result = controller.get_map_list()
-        
-            self.assertEqual(result, [1, 2, 3])
-
-    def test_get_map_list_failure(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None), \
-             patch.object(MainController, 'get_json_from_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-        
-            result = controller.get_map_list()
-        
-            self.assertIsNone(result)
-            self.assertIn("Error in get_map_list", controller.error_msg)
-
-############ TEST HEAD CONTROL ############
-
-    def test_move_head_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.head_control = True
-
-            result = controller.move_head(180, 180, 1)
-            self.assertTrue(result)
-
-    def test_move_head_failure(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.head_control = False
-
-            result = controller.move_head(180, 180, 1)
-            self.assertFalse(result)
-            self.assertIn("Error in move_head", controller.error_msg)
-
-
-    def test_enable_idle_mode_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.head_control = True
-
-            result = controller.enable_idle_mode()
-            self.assertTrue(result)
-
-    def test_enable_idle_mode_failure(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.head_control = False
-
-            result = controller.enable_idle_mode()
-            self.assertFalse(result)
-            self.assertIn("Error in set_idle", controller.error_msg)
-
-    def test_disable_idle_mode_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.head_control = True
-
-            result = controller.disable_idle_mode()
-            self.assertTrue(result)
-
-    def test_disable_idle_mode_failure(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.head_control = False
-
-            result = controller.disable_idle_mode()
-            self.assertFalse(result)
-            self.assertIn("Error in set_idle", controller.error_msg)
-
-    def test_set_gaze_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.head_control = True
-
-            result = controller.set_gaze(0, 0)
-            self.assertTrue(result)
-
-    def test_set_gaze_failure(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.head_control = False
-
-            result = controller.set_gaze(0, 0)
-            self.assertFalse(result)
-            self.assertIn("Error in set_gaze", controller.error_msg)
-
-
-############ TEST ARM CONTROL ############
-
-    def test_arm_calibrate_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.arm_control = True   
-            
-            result = controller.arm_calibrate()
-            self.assertTrue(result)
-
-    def test_arm_calibrate_failure(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.arm_control = False
-            
-            result = controller.arm_calibrate()
-            self.assertFalse(result)
-            self.assertIn("Error in arm_calibrate", controller.error_msg)
-
-    def test_open_gripper_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.arm_control = True
-
-            result = controller.open_gripper()
-            self.assertTrue(result)
-
-    def test_open_gripper_failure(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.arm_control = False
-            
-            result = controller.open_gripper()
-            self.assertFalse(result)
-            self.assertIn("Error in open_gripper", controller.error_msg)
-
-    def test_close_gripper_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController() 
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.arm_control = True
-
-            result = controller.close_gripper()
-            self.assertTrue(result)
-
-    def test_close_gripper_failure(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.arm_control = False  
-
-            result = controller.close_gripper()
-            self.assertFalse(result)
-            self.assertIn("Error in close_gripper", controller.error_msg)
-
-    def test_move_single_joint_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.arm_control = True
-
-            result = controller.move_single_joint(1, 180, 1)
-            self.assertTrue(result)
-
-    def test_move_single_joint_failure(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.arm_control = False  
-
-            result = controller.move_single_joint(1, 180, 1)
-            self.assertFalse(result)
-            self.assertIn("Error in move_single_joint", controller.error_msg)
-
-    def test_move_all_joint_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.arm_control = True
-
-            result = controller.move_all_joint(180, 180, 180, 180, 180, 180, 1)
-            self.assertTrue(result)
-
-    def test_move_all_joints_failure(self): 
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'send_raw_command', return_value= None):
-            controller = ProgrammedController()
-            controller.driver_initialized = True
-            controller.machine_mode = True
-            controller.arm_control = False
-
-            result = controller.move_all_joint(180, 180, 180, 180, 180, 180, 1)
-            self.assertFalse(result)
-            self.assertIn("Error in move_all_joint", controller.error_msg)
-
-############ TEST OTHER COMMANDS ############
 
     def test_get_current_action(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'get_state', return_value= "ACTION"):
-            controller = ProgrammedController()
+        with patch.object(SerialHelper, '__init__', return_value= None), \
+             patch.object(SerialHelper, 'get_state', return_value= "ACTION"):
+            controller = HackerbotHelper()
         
             result = controller.get_current_action()
         
             self.assertEqual(result, "ACTION")
         
     def test_get_error_with_ser_error(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'get_ser_error', return_value= "Serial error"):
-            controller = ProgrammedController()
+        with patch.object(SerialHelper, '__init__', return_value= None), \
+             patch.object(SerialHelper, 'get_ser_error', return_value= "Serial error"):
+            controller = HackerbotHelper()
             controller.error_msg = "Controller error"
         
             result = controller.get_error()
@@ -603,9 +128,9 @@ class TestProgrammedController(unittest.TestCase):
             self.assertEqual(result, "Serial error")
         
     def test_get_error_with_no_ser_error(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'get_ser_error', return_value= None):
-            controller = ProgrammedController()
+        with patch.object(SerialHelper, '__init__', return_value= None), \
+             patch.object(SerialHelper, 'get_ser_error', return_value= None):
+            controller = HackerbotHelper()
             controller.error_msg = "Controller error"
         
             result = controller.get_error()
@@ -614,9 +139,9 @@ class TestProgrammedController(unittest.TestCase):
 
         
     def test_destroy_success(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'stop_read_thread', return_value= None):
-            controller = ProgrammedController()
+        with patch.object(SerialHelper, '__init__', return_value= None), \
+             patch.object(SerialHelper, 'stop_read_thread', return_value= None):
+            controller = HackerbotHelper()
             controller.controller_initialized = True
             result = controller.destroy()
             
@@ -624,9 +149,9 @@ class TestProgrammedController(unittest.TestCase):
             self.assertFalse(controller.controller_initialized)
         
     def test_destroy_failure(self):
-        with patch.object(MainController, '__init__', return_value= None), \
-             patch.object(MainController, 'stop_read_thread', side_effect= Exception("Destroy error")):
-            controller = ProgrammedController()
+        with patch.object(SerialHelper, '__init__', return_value= None), \
+             patch.object(SerialHelper, 'stop_read_thread', side_effect= Exception("Destroy error")):
+            controller = HackerbotHelper()
             controller.controller_initialized = True
             
             result = controller.destroy()

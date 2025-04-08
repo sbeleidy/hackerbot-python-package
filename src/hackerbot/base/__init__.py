@@ -184,6 +184,7 @@ class Base():
         """
         self.kill()
         if auto_dock:
-            time.sleep(2)
+            time.sleep(2.0)
+            print("Docking...")
             self.dock()
         self._controller.destroy()

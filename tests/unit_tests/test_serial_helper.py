@@ -8,7 +8,7 @@
 # Created:    April 2025
 # Updated:    2025.04.07
 #
-# This module contains the tests for the SerialHelper class.
+# This module contains the unit tests for the SerialHelper class.
 #
 # Special thanks to the following for their code contributions to this codebase:
 # Allen Chien - https://github.com/AllenChienXXX
@@ -18,10 +18,7 @@
 import unittest
 from unittest.mock import patch, MagicMock, mock_open
 import serial
-import os
-import json
-import threading
-import timew
+import time
 from hackerbot.utils.serial_helper import SerialHelper
 
 class TestSerialHelper(unittest.TestCase):
@@ -30,8 +27,8 @@ class TestSerialHelper(unittest.TestCase):
     @patch('serial.Serial')
     def test_init_success(self, mock_serial):
         mock_serial.return_value.is_open = True
-        controller = SerialHelper(port='/dev/ttyACM1') # provide the right port
-        self.assertEqual(controller.port, '/dev/ttyACM1')
+        controller = SerialHelper(port='/dev/MOCK_PORT') # provide the right port
+        self.assertEqual(controller.port, '/dev/MOCK_PORT')
         self.assertTrue(controller.ser.is_open)
 
     @patch('serial.Serial', side_effect=serial.SerialException("Serial error"))
@@ -177,13 +174,6 @@ class TestSerialHelper(unittest.TestCase):
         self.assertIn("read error", controller.get_ser_error())
 
 ##### THREAD TESTS
-
-    @patch('serial.Serial')
-    def test_thread_safety(self, mock_serial):
-        controller = SerialHelper(port="/dev/MOCK_PORT")
-        with controller.lock:
-            controller.state = "LOCKED_TEST"
-        self.assertEqual(controller.get_state(), "LOCKED_TEST")
     
     @patch('serial.Serial')
     def test_stop_read_thread(self, mock_serial):

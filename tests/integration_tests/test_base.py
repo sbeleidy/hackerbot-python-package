@@ -8,12 +8,11 @@ def main():
         # bot.base.set_mode(2)
         # bot.base.status()
         # bot.base.position()
-        bot.base.start()
+        # bot.base.start()
         bot.base.quickmap()
         # bot.base.dock()
         # bot.base.kill()
         # bot.base.trigger_bump(True, True)
-        # bot.base.drive(-100, 0)
         # bot.base.drive(-100, 0)
 
 

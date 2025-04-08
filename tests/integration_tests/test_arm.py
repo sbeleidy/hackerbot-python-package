@@ -1,10 +1,18 @@
-import hackerbot
+from hackerbot import Hackerbot
 import time
 
 def main():
     try:
-        bot = hackerbot(verbose_mode=True)
-        print(bot.core.versions())
+        bot = Hackerbot(verbose_mode=True)
+        # bot.arm.move_joint(1, 0, 100)
+        bot.arm.move_joints(0, 0, 0, 0, 0, 0, 100)
+        # print("Opening gripper")
+        # bot.arm.gripper.open()
+        # print("Closing gripper")
+        # bot.arm.gripper.close()
+        # print("Calibrating gripper")
+        # bot.arm.gripper.calibrate()
+
 
 
     except Exception as e:
