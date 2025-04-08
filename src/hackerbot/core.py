@@ -26,13 +26,14 @@ class Core(HackerbotHelper):
         
         :param controller: HackerbotHelper object
         """
-        self.tofs_enabled = controller.tofs
-        self.json_response = controller.json_mode
+        self.tofs_enabled = controller._tofs_enabled
+        self.json_response = controller._json_mode
+
         self._controller = controller
 
     def ping(self):
         try:
-            self._controller.check_base_init()
+            self._controller.check_controller_init()
             self._controller.send_raw_command("PING")
             time.sleep(0.1)
             response = self._controller.get_json_from_command("ping")
@@ -51,64 +52,42 @@ class Core(HackerbotHelper):
             }
 
             # Check component statuses
-            main_controller_attached = response.get("main_controller") == "attached"
-            temperature_sensor_attached = response.get("temperature_sensor") == "attached"
-            audio_mouth_eyes_attached = response.get("audio_mouth_eyes") == "attached"
-            dynamixel_controller_attached = response.get("dynamixel_controller") == "attached"
-            arm_control_attached = response.get("arm_controller") == "attached"
+            self._controller._main_controller_attached = response.get("main_controller") == "attached"
+            self._controller._temperature_sensor_attached = response.get("temperature_sensor") == "attached"
+            self._controller._left_tof_attached = response.get("left_tofs") == "attached"
+            self._controller._right_tof_attached = response.get("right_tofs") == "attached"
+            self._controller._audio_mouth_eyes_attached = response.get("audio_mouth_eyes") == "attached"
+            self._controller._dynamixel_controller_attached = response.get("dynamixel_controller") == "attached"
+            self._controller._arm_attached = response.get("arm_controller") == "attached"
 
             # Update status
-            robots_state["main_controller_attached"] = main_controller_attached
-            robots_state["temperature_sensor_attached"] = temperature_sensor_attached
-            robots_state["audio_mouth_eyes_attached"] = audio_mouth_eyes_attached
-            robots_state["dynamixel_controller_attached"] = dynamixel_controller_attached
-            robots_state["arm_control_attached"] = arm_control_attached
-
-            if not main_controller_attached:
-                raise Exception("Main controller not attached")
-            if not temperature_sensor_attached:
-                self._controller.log_warning("Temperature sensor not attached")
-
-            if not audio_mouth_eyes_attached:
-                self._controller.log_warning("Audio mouth and eyes not attached, Head will not move")
-                self.head_control = False
-            elif not dynamixel_controller_attached:
-                self._controller.log_warning("Dynamixel controller not attached, Head will not move")
-                self.head_control = False
-            else:
-                self.head_control = True
-                robots_state["head_control_enabled"] = True
-
-            if arm_control_attached:
-                self.arm_control = True
-                robots_state["arm_control_enabled"] = True
-            else:
-                self._controller.log_warning("Arm control not attached, Arm will not move")
-                self.arm_control = False
-
+            robots_state["main_controller_attached"] = self._controller._main_controller_attached
+            robots_state["temperature_sensor_attached"] = self._controller._temperature_sensor_attached
+            robots_state["left_tof_attached"] = self._controller._left_tof_attached
+            robots_state["right_tof_attached"] = self._controller._right_tof_attached
+            robots_state["audio_mouth_eyes_attached"] = self._controller._audio_mouth_eyes_attached
+            robots_state["dynamixel_controller_attached"] = self._controller._dynamixel_controller_attached
+            robots_state["arm_control_attached"] = self._controller._arm_attached
             # Convert to JSON string (excluding warnings) before returning
             return json.dumps(robots_state, indent=2)
 
         except Exception as e:
-            self._controller.log_error(f"Error in get_ping: {e}")
+            self._controller.log_error(f"Error in ping: {e}")
             return None
 
 
     def versions(self):
         try:
-            self._controller.check_base_init()
+            self._controller.check_controller_init()
             self._controller.send_raw_command("VERSION")
             time.sleep(0.1)
             response = self._controller.get_json_from_command("version")
             if response is None:
                 raise Exception("No response from main controller")
 
-            main_version = response.get("main_controller")
-
             # Build response dictionary with all relevant version info
             version_info = {
-                "main_controller_version": main_version,
-                # "temperature_sensor_version": response.get("temperature_sensor"),
+                "main_controller_version": response.get("main_controller"),
                 "audio_mouth_eyes_version": response.get("audio_mouth_eyes"),
                 "dynamixel_controller_version": response.get("dynamixel_controller"),
                 "arm_controller_version": response.get("arm_controller")
@@ -117,6 +96,6 @@ class Core(HackerbotHelper):
             return json.dumps(version_info, indent=2)
 
         except Exception as e:
-            self._controller.log_error(f"Error in get_versions: {e}")
+            self._controller.log_error(f"Error in versions: {e}")
             return None
             

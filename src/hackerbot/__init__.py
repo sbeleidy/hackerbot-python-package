@@ -17,7 +17,7 @@
 
 
 from hackerbot.core import Core
-# from hackerbot.base import Base
+from hackerbot.base import Base
 # from hackerbot.arm import Arm
 # from hackerbot.head import Head
 from hackerbot.utils.hackerbot_helper import HackerbotHelper
@@ -28,6 +28,6 @@ class Hackerbot(HackerbotHelper):
 
         # Share self (which is a HackerbotHelper) with subsystems
         self.core = Core(controller=self)
-        # self.base = Base(controller=self)
+        self.base = Base(controller=self)
         # self.arm = Arm(controller=self)
         # self.head = Head(controller=self)

@@ -22,40 +22,49 @@ import logging
 
 class HackerbotHelper(SerialHelper):
     def __init__(self, port=None, board=None, verbose_mode=False):
-        self.error_msg = ""
-        self.warning_msg = ""
-        self.v_mode = verbose_mode
-        self.base_initialized = False  # Ensure this is set before exception handling
+        self._error_msg = ""
+        self._warning_msg = ""
+        self._v_mode = verbose_mode
+        self._main_controller_init = False  # Ensure this is set before exception handling
 
-        self.mode = None
+        self._json_mode = False
 
-        self.json_mode = False
+        self._main_controller_attached = False
+        self._temperature_sensor_attached = False
 
-        self.tofs_attached = False
-        self.tofs_enabled = False
+        self._left_tof_attached = False
+        self._right_tof_attached = False
+
+        self._tofs_enabled = False
         
-        self.head_attached = False
-        self.arm_attached = False
+        self._base_init = False
+        self._driver_mode = False
         
-        self.port = port
-        self.board = board
+        self._audio_mouth_eyes_attached = False
+        self._dynamixel_controller_attached = False
+
+        self._head_attached = False
+        self._arm_attached = False
+        
+        self._port = port
+        self._board = board
 
         self.setup()
 
 
     def setup(self):
         try:
-            if self.port is None or self.board is None:
+            if self._port is None or self._board is None:
                 super().__init__()
-                self.board, self.port = super().get_board_and_port()
+                self._board, self._port = super().get_board_and_port()
             else:
-                super().__init__(self.port, self.board)
+                super().__init__(self._port, self._board)
 
-            self.base_initialized = True
+            self._main_controller_init = True
             self.set_json_mode(True)
-            self.set_TOFs(True)
+            # self.set_TOFs(True)
         except Exception as e:
-            self.log_error(f"Error in setting up hackerbot helper: {e}")
+            raise Exception(f"Error in setting up hackerbot helper: {e}")
 
     # Activate JSON mode
     def set_json_mode(self, mode):
@@ -68,13 +77,15 @@ class HackerbotHelper(SerialHelper):
             response = super().get_json_from_command("json")
             if response is None:
                 raise Exception("Failed to set json mode to: ", mode)
-            self.json_mode = mode
+            self._json_mode = mode
         except Exception as e:
             raise Exception(f"Error in set_json_mode: {e}")
 
     #Set TOFs
     def set_TOFs(self, mode):
         try:
+            if not self._tofs_attached:
+                raise Exception("TOFs not attached")
             if mode == True:
                 super().send_raw_command("TOFS, 1")
             else:
@@ -83,7 +94,7 @@ class HackerbotHelper(SerialHelper):
             response = super().get_json_from_command("tofs")
             if response is None:
                 raise Exception("TOFs activation failed")
-            self.tofs = True
+            self._tofs_enabled = True
         except Exception as e:
             raise Exception(f"Error in enable TOFs: {e}")
 
@@ -95,51 +106,46 @@ class HackerbotHelper(SerialHelper):
         if super().get_ser_error() is not None:
             return super().get_ser_error()
         else:
-            return self.error_msg
+            return self._error_msg
 
     def log_error(self, error):
-        if self.v_mode:
+        if self._v_mode:
             logging.error(error)
-        self.error_msg = error
+        self._error_msg = error
 
     def log_warning(self, warning):
-        if self.v_mode:
+        if self._v_mode:
             logging.warning(warning)
-        self.warning_msg = warning
+        self._warning_msg = warning
 
-    def check_driver_init(self):
-        if not self.driver_initialized:
-            raise Exception("Driver not initialized. Please initialize the driver first.")
+    def check_controller_init(self):
+        if not self._main_controller_init:
+            raise Exception("Main controller not initialized.")
         
     def check_base_init(self):
-        if not self.base_initialized:
-            raise Exception("Controller not initialized. Please initialize the controller first.")
-        
-    def check_machine_mode(self):
-        if not self.machine_mode:
-            raise Exception("Machine mode needs to be activated before this command. Please activate machine mode first.")
+        if not self._base_init:
+            raise Exception("Base not initialized.")
+        if not self.json_mode:
+            self.log_warning("JSON mode not enabled.")
+            raise Exception("JSON mode not enabled.")
+
+    def check_driver_mode(self):
+        if not self._driver_mode:
+            raise Exception("Not in driver mode.")
         
     def check_head_control(self):
-        if not self.head_control:
-            raise Exception("Head control needs to be activated before this command. Please activate head control first.")
+        if not self._head_control:
+            raise Exception("Head not attached, can't control head.")
 
     def check_arm_control(self):
-        if not self.arm_control:
-            raise Exception("Arm control needs to be activated before this command. Please activate arm control first.")
-
-    def check_system(self):
-        try:
-            self.check_base_init()
-            self.check_driver_init()
-            self.check_machine_mode()
-        except Exception as e:
-            raise Exception(f"System not ready: {e}")
+        if not self._arm_control:
+            raise Exception("Arm not attached, can't control arm.")
         
     def destroy(self):
         try:
             super().disconnect_serial()
-            self.base_initialized = False
-            self.driver_initialized = False
+            # self.base_initialized = False
+            # self.driver_initialized = False
             return True
         except Exception as e:
             self.log_error(f"Error in destroy: {e}")

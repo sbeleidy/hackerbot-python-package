@@ -3,8 +3,9 @@ import hackerbot
 def main():
     try:
         bot = hackerbot.Hackerbot(verbose_mode=True)
-        print(bot.core.ping()) 
-        print(bot.core.versions())
+        bot.core.ping()
+        bot.core.versions()
+        bot.base.initialize()
 
 
 
