@@ -143,9 +143,18 @@ class SerialHelper:
         self.read_thread.join()  # Wait for the thread to fully terminate
 
     def disconnect_serial(self):
-        self.stop_read_thread()  # Ensure the thread stops first
+        """Disconnect the serial port and stop the read thread cleanly."""
+        # Stop the reading thread first
+        self.stop_read_thread()
+
+        # Close the serial connection safely
         if self.ser:
             try:
-                self.ser.close()
+                if self.ser.is_open:
+                    self.ser.close()
             except serial.SerialException as e:
                 raise ConnectionError(f"Error closing serial connection: {e}")
+            except Exception as e:
+                raise RuntimeError(f"Unexpected error while disconnecting serial: {e}")
+            finally:
+                self.ser = None
