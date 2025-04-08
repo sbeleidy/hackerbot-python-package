@@ -90,7 +90,7 @@ class Base():
         :return: True if the quick mapping command is successful, False otherwise.
         """
         try:
-            self._controller.send_raw_command("QUICKMAP")
+            self._controller.send_raw_command("B_QUICKMAP")
             # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
@@ -183,8 +183,7 @@ class Base():
         :param auto_dock: If True, the base will dock before being destroyed. Defaults to False.
         """
         self.kill()
-        time.sleep(1.5)
         if auto_dock:
-            print("Docking")
+            time.sleep(2)
             self.dock()
         self._controller.destroy()

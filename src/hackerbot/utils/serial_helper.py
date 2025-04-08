@@ -53,7 +53,6 @@ class SerialHelper:
             raise RuntimeError(f"Error initializing main controller: {e}")
         
         self.read_thread_stop_event = threading.Event()
-        self.lock = threading.Lock()  # Shared lock for thread safety
         self.read_thread = threading.Thread(target=self.read_serial)
         self.read_thread.daemon = False
         self.read_thread.start()
@@ -103,11 +102,8 @@ class SerialHelper:
                             # Try to parse the response as JSON
                             try:
                                 json_entry = json.loads(response)
-                                self.json_entries.append(json_entry)  # Store the latest JSON entry
-                                with self.lock:
-                                    with open(self.LOG_FILE_PATH, 'a') as file:
-                                        file.write(response + "\n")
-                                        file.flush()
+                                if json_entry.get("command"): # Only store JSON entries with a "command" key
+                                    self.json_entries.append(json_entry)  # Store the latest JSON entry
                             except json.JSONDecodeError:
                                 # If it's not a valid JSON entry, just continue
                                 continue
