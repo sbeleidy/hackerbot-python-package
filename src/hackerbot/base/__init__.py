@@ -32,6 +32,7 @@ class Base():
         self.maps = Maps(controller)
 
         self._future_completed = False
+        self._docked = True # Default to true, assume always start from charger
 
       
     def initialize(self):
@@ -63,6 +64,8 @@ class Base():
             
             if response.get("left_set_speed") == 0 and response.get("right_set_speed") == 0:
                 self._future_completed = True
+            else:
+                self._future_completed = False
 
                         # Parse and return relevant fields
             parsed_data = {
@@ -94,7 +97,10 @@ class Base():
             self._controller.send_raw_command("B_START")
             # Not fetching json response since machine mode not implemented
             self._controller._driver_mode = True
-            time.sleep(1.5)
+            # self.wait_until_completed()
+            if self._docked:
+                time.sleep(3)
+                self._docked = False
             return True
         except Exception as e:
             self._controller.log_error(f"Error in base:start: {e}")
@@ -114,6 +120,7 @@ class Base():
         try:
             self._controller.send_raw_command("B_QUICKMAP")
             # Not fetching json response since machine mode not implemented
+            self.wait_until_completed()
             return True
         except Exception as e:
             self._controller.log_error(f"Error in base:quickmap: {e}")
@@ -132,7 +139,10 @@ class Base():
         """
         try:
             self._controller.send_raw_command("B_DOCK")
+            time.sleep(2)
             # Not fetching json response since machine mode not implemented
+            self.wait_until_completed()
+            self._docked = True
             return True
         except Exception as e:
             self._controller.log_error(f"Error in base:dock: {e}")
@@ -189,11 +199,16 @@ class Base():
             response = self._controller.get_json_from_command("drive")
             if response is None:
                 raise Exception("Drive command failed")
-            # time.sleep(4.0)
+            self.wait_until_completed()
             return True
         except Exception as e:
             self._controller.log_error(f"Error in base:drive: {e}")
             return False
+        
+    def wait_until_completed(self):
+        while not self._future_completed:
+            self.status()
+        self._future_completed = False
         
     def destroy(self, auto_dock=False):
         """
@@ -207,7 +222,6 @@ class Base():
         """
         self.kill()
         if auto_dock:
-            time.sleep(2.0)
-            print("Docking...")
+            time.sleep(3.0)
             self.dock()
         self._controller.destroy()

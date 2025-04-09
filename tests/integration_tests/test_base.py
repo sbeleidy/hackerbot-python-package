@@ -8,20 +8,30 @@ def main():
         # bot.base.set_mode(2)
         # bot.base.status()
         # bot.base.position()
+        # print("Starting")
         # bot.base.start()
         # bot.base.quickmap()
-        # bot.base.dock()
         # bot.base.kill()
         # bot.base.trigger_bump(True, True)
-        bot.base.drive(-500, 0)
-        for _ in range(10):
-            print(bot.base.status())
-            time.sleep(1)
-
+        # print("Driving")
+        # bot.base.drive(-500, 0)
+        # bot.base.drive(100, 0)
+        # bot.base.drive(0, 360)
+        for i in range(5):
+            print("Starting")
+            bot.base.start()
+            print("Driving")
+            bot.base.drive(-500, 0)
+            bot.base.drive(0, 90)
+            bot.base.drive(100, 0)
+            bot.base.drive(0, 90)
+            print("Docking")
+            bot.base.dock()
 
     except Exception as e:
         print(e)
     finally:
+        print("End")
         bot.base.destroy(auto_dock=True)
 
 if __name__ == "__main__":
