@@ -30,6 +30,9 @@ class Base():
         self.initialize() # Call before any action is done on the base
 
         self.maps = Maps(controller)
+
+        self._future_completed = False
+
       
     def initialize(self):
         try:
@@ -53,11 +56,29 @@ class Base():
     def status(self):
         try:
             self._controller.send_raw_command("B_STATUS")
-            # Not fetching json response since machine mode not implemented
-            return True
+            time.sleep(0.1)
+            response = self._controller.get_json_from_command("status")
+            if response is None:
+                raise Exception("Status command failed")
+            
+            if response.get("left_set_speed") == 0 and response.get("right_set_speed") == 0:
+                self._future_completed = True
+
+                        # Parse and return relevant fields
+            parsed_data = {
+                "timestamp": response.get("timestamp"),
+                "left_encoder": response.get("left_encoder"),
+                "right_encoder": response.get("right_encoder"),
+                "left_speed": response.get("left_speed"),
+                "right_speed": response.get("right_speed"),
+                "left_set_speed": response.get("left_set_speed"),
+                "right_set_speed": response.get("right_set_speed"),
+                "wall_tof": response.get("wall_tof"),
+            }
+            return parsed_data
         except Exception as e:
             self._controller.log_error(f"Error in base:status: {e}")
-            return False
+            return None
         
     def position(self):
         try:
@@ -73,6 +94,7 @@ class Base():
             self._controller.send_raw_command("B_START")
             # Not fetching json response since machine mode not implemented
             self._controller._driver_mode = True
+            time.sleep(1.5)
             return True
         except Exception as e:
             self._controller.log_error(f"Error in base:start: {e}")
@@ -167,6 +189,7 @@ class Base():
             response = self._controller.get_json_from_command("drive")
             if response is None:
                 raise Exception("Drive command failed")
+            # time.sleep(4.0)
             return True
         except Exception as e:
             self._controller.log_error(f"Error in base:drive: {e}")
