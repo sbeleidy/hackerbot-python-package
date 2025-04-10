@@ -42,7 +42,7 @@ class Gripper(HackerbotHelper):
             # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
-            self.log_error(f"Error in gripper:open: {e}")
+            self._controller.log_error(f"Error in gripper:open: {e}")
             return False
             
     def close(self):

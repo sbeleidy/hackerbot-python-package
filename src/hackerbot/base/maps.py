@@ -82,7 +82,7 @@ class Maps():
                 raise Exception("No maps found")
             return map_list_json.get("map_ids")
         except Exception as e:
-            self.log_error(f"Error in maps:list: {e}")
+            self._controller.log_error(f"Error in maps:list: {e}")
             return None
         
     def goto(self, x, y, angle, speed):

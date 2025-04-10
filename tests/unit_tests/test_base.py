@@ -20,7 +20,7 @@ from unittest.mock import patch, MagicMock, call
 from hackerbot.utils.hackerbot_helper import HackerbotHelper
 from hackerbot.base import Base
 
-class TestHackerbotCore(unittest.TestCase):
+class TestHackerbotBase(unittest.TestCase):
 
     def setUp(self):
         self.mock_controller = MagicMock()

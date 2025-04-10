@@ -33,9 +33,9 @@ class Eyes():
         bool: Whether the command was successful
         """
         try:
-            super().send_raw_command(f"H_GAZE,{x},{y}")
+            self._controller.send_raw_command(f"H_GAZE,{x},{y}")
             # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
-            self.log_error(f"Error in eyes:gaze: {e}")
+            self._controller.log_error(f"Error in eyes:gaze: {e}")
             return False
