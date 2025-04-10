@@ -24,12 +24,30 @@ class Maps():
         self._goto_completed = False
 
         self.map_id = None
-        self.x = None
-        self.y = None
-        self.angle = None
+        self._x = None
+        self._y = None
+        self._angle = None
+
+        self._goal_x = None
+        self._goal_y = None
+        self._goal_angle = None
+
+        self._docked = True
 
     # Returns a string of map data
     def fetch(self, map_id):
+        """
+        Fetch the map data for a given map id.
+
+        This function sends a command to the base to generate the map data
+        for a given map id. It first checks the system status to ensure all
+        components are ready. If the command is successfully sent, the
+        function returns the compressed map data as a string. In case of any
+        errors, it logs the error message and returns None.
+
+        :param map_id: The id of the map to fetch
+        :return: The compressed map data as a string if successful, None otherwise.
+        """
         try:
             # Check if controller and driver are initialized and in machine mode
             command = f"B_MAPDATA,{map_id}"
@@ -45,6 +63,16 @@ class Maps():
     
     # Returns a list of map ids
     def list(self):
+        """
+        Get a list of available maps.
+
+        This function sends a command to the base to generate a list of available maps.
+        It first checks the system status to ensure all components are ready. If
+        the command is successfully sent, the function returns a list of map ids.
+        In case of any errors, it logs the error message and returns None.
+
+        :return: A list of map ids if successful, None otherwise.
+        """
         try:
             # Check if controller and driver are initialized and in machine mode
             self._controller.send_raw_command("B_MAPLIST")
@@ -73,9 +101,14 @@ class Maps():
         try:
             command = f"B_GOTO,{x},{y},{angle},{speed}"
             self._controller.send_raw_command(command)
+            self._goal_x = x
+            self._goal_y = y
+            self._goal_angle = angle
             # Not fetching json response since machine mode not implemented
             if self._docked == True:
-                time.sleep(3)
+                time.sleep(2) # Some time to leave the base
+                self._docked = False
+            self._wait_until_reach_pose()
             return True
         except Exception as e:
             self._controller.log_error(f"Error in maps:goto: {e}")
@@ -84,17 +117,30 @@ class Maps():
     def position(self):
         try:
             self._controller.send_raw_command("B_POSE")
-            pose = self._controller.get_json_from_command("position")
+            time.sleep(0.1)
+            pose = self._controller.get_json_from_command("pose")
             if pose is None:
                 raise Exception("No position found")
             self.map_id = pose.get("map_id")
-            self.x = pose.get("pose_x")
-            self.y = pose.get("pose_y")
-            self.angle = pose.get("pose_angle")
+            self._x = pose.get("pose_x")
+            self._y = pose.get("pose_y")
+            self._angle = pose.get("pose_angle")
             # Not fetching json response since machine mode not implemented
-            return True
+            return {"x": self._x, "y": self._y, "angle": self._angle}
         except Exception as e:
             self._controller.log_error(f"Error in base:position: {e}")
             return False
         
-    # def wait_until_reach_pose(self):
+    def _wait_until_reach_pose(self):
+        while not self._goto_completed:
+            self.position()
+            self._calculate_position_offset()
+        self._goto_completed = False
+
+    def _calculate_position_offset(self):
+        x_offset = self._goal_x - self._x
+        y_offset = self._goal_y - self._y
+        angle_offset = (self._goal_angle - self._angle) // 180
+        # print("x_offset: {0}, y_offset: {1}, angle_offset: {2}".format(x_offset, y_offset, angle_offset))
+        if max(abs(x_offset), abs(y_offset), abs(angle_offset)) < 0.1:
+            self._goto_completed = True

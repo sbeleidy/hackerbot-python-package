@@ -91,7 +91,7 @@ class Base():
             if self._docked:
                 time.sleep(3)
                 self._docked = False
-            self.wait_until_completed()
+            self._wait_until_completed()
 
             return True
         except Exception as e:
@@ -112,7 +112,7 @@ class Base():
         try:
             self._controller.send_raw_command("B_QUICKMAP")
             # Not fetching json response since machine mode not implemented
-            self.wait_until_completed()
+            self._wait_until_completed()
             return True
         except Exception as e:
             self._controller.log_error(f"Error in base:quickmap: {e}")
@@ -133,7 +133,7 @@ class Base():
             self._controller.send_raw_command("B_DOCK")
             time.sleep(2)
             # Not fetching json response since machine mode not implemented
-            self.wait_until_completed()
+            self._wait_until_completed()
             self._docked = True
             self._controller._driver_mode = False
             return True
@@ -191,16 +191,16 @@ class Base():
             response = self._controller.get_json_from_command("drive")
             if response is None:
                 raise Exception("Drive command failed")
-            self.wait_until_completed()
+            self._wait_until_completed()
             return True
         except Exception as e:
             self._controller.log_error(f"Error in base:drive: {e}")
             return False
         
-    def wait_until_completed(self):
+    def _wait_until_completed(self):
         while not self._future_completed:
             self.status()
-            print(self.status())
+            # print(self.status())
         self._future_completed = False
         
     def destroy(self, auto_dock=False):
