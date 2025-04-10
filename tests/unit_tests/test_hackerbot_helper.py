@@ -128,48 +128,103 @@ class TestHackerbotHelper(unittest.TestCase):
             except Exception as e:
                 self.assertIn("Error in set_TOFs", str(e))
                 self.assertFalse(controller._tofs_enabled)
+
+    def test_set_tofs_not_attached_failure(self):
+        with patch.object(HackerbotHelper, '__init__', return_value= None), \
+             patch.object(SerialHelper, 'send_raw_command', return_value= None), \
+             patch.object(SerialHelper, 'get_json_from_command', return_value= {"command": "tofs", "success": "true"}):
+            controller = HackerbotHelper()
+            controller._tofs_enabled = False
+            try:
+                controller._left_tof_attached = True
+                controller._right_tof_attached = False
+                controller.set_TOFs(True)
+            except Exception as e:
+                self.assertIn("Error in set_TOFs", str(e))
+                self.assertFalse(controller._tofs_enabled)
+            try:
+                controller._left_tof_attached = False
+                controller._right_tof_attached = True
+                controller.set_TOFs(True)
+            except Exception as e:
+                self.assertIn("Error in set_TOFs", str(e))
+                self.assertFalse(controller._tofs_enabled)
+            try:
+                controller._left_tof_attached = False
+                controller._right_tof_attached = False
+                controller.set_TOFs(True)
+            except Exception as e:
+                self.assertIn("Error in set_TOFs", str(e))
+                self.assertFalse(controller._tofs_enabled)
+
+    def test_get_current_action(self):
+        with patch.object(HackerbotHelper, '__init__', return_value= None), \
+             patch.object(SerialHelper, 'get_state', return_value= "STATE"):
+            controller = HackerbotHelper()
+        
+            result = controller.get_current_action()
+        
+            self.assertEqual(result, "STATE")
             
     def test_get_error_with_ser_error(self):
-        with patch.object(SerialHelper, '__init__', return_value= None), \
+        with patch.object(HackerbotHelper, '__init__', return_value= None), \
              patch.object(SerialHelper, 'get_ser_error', return_value= "Serial error"):
             controller = HackerbotHelper()
-            controller.error_msg = "Controller error"
+            controller._error_msg = "Controller error"
         
             result = controller.get_error()
         
             self.assertEqual(result, "Serial error")
         
     def test_get_error_with_no_ser_error(self):
-        with patch.object(SerialHelper, '__init__', return_value= None), \
+        with patch.object(HackerbotHelper, '__init__', return_value= None), \
              patch.object(SerialHelper, 'get_ser_error', return_value= None):
             controller = HackerbotHelper()
-            controller.error_msg = "Controller error"
+            controller._error_msg = "Controller error"
         
             result = controller.get_error()
         
             self.assertEqual(result, "Controller error")
 
+    def test_log_error(self):
+        with patch.object(HackerbotHelper, '__init__', return_value= None):
+            controller = HackerbotHelper()
+            controller._v_mode = True
+        
+            controller.log_error("Error message")
+        
+            self.assertIn("Error message", controller._error_msg)
+
+    def test_log_warning(self):
+        with patch.object(HackerbotHelper, '__init__', return_value= None):
+            controller = HackerbotHelper()
+            controller._v_mode = True
+        
+            controller.log_warning("Warning message")
+        
+            self.assertIn("Warning message", controller._warning_msg)
         
     def test_destroy_success(self):
-        with patch.object(SerialHelper, '__init__', return_value= None), \
-             patch.object(SerialHelper, 'stop_read_thread', return_value= None):
+        with patch.object(HackerbotHelper, '__init__', return_value= None), \
+             patch.object(SerialHelper, 'disconnect_serial', return_value= None):
             controller = HackerbotHelper()
-            controller.controller_initialized = True
+            controller._main_controller_init = True
             result = controller.destroy()
             
             self.assertTrue(result)
-            self.assertFalse(controller.controller_initialized)
+            self.assertFalse(controller._main_controller_init)
         
     def test_destroy_failure(self):
-        with patch.object(SerialHelper, '__init__', return_value= None), \
-             patch.object(SerialHelper, 'stop_read_thread', side_effect= Exception("Destroy error")):
+        with patch.object(HackerbotHelper, '__init__', return_value= None), \
+             patch.object(SerialHelper, 'disconnect_serial', side_effect= ConnectionError("Error closing serial connection:")):
             controller = HackerbotHelper()
-            controller.controller_initialized = True
+            controller._main_controller_init = True
+            controller._v_mode = True
             
             result = controller.destroy()
             
             self.assertFalse(result)
-            self.assertIn("Error in stop_controller", controller.error_msg)
+            self.assertIn("Error in destroy", controller._error_msg)
 
 if __name__ == '__main__':
     unittest.main()

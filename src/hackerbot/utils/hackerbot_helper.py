@@ -131,18 +131,7 @@ class HackerbotHelper(SerialHelper):
             raise Exception("Main controller not initialized.")
         if not self._json_mode:
             raise Exception("JSON mode not enabled.")
-        
-    def check_base_init(self):
-        """
-        Check if base is initialized and prevent any base commands from being sent.
-        """
-        if not self._base_init:
-            raise Exception("Base not initialized.")
 
-    def check_driver_mode(self):
-        if not self._driver_mode:
-            raise Exception("Not in driver mode.")
-        
     def destroy(self):
         try:
             super().disconnect_serial()
@@ -151,7 +140,3 @@ class HackerbotHelper(SerialHelper):
         except Exception as e:
             self.log_error(f"Error in destroy: {e}")
             return False
-        
-    # def __del__(self):
-    #     print("Destroying hackerbot helper...")
-    #     self.destroy()
