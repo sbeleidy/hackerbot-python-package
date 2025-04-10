@@ -55,9 +55,7 @@ class Core():
                 "temperature_sensor_attached": False,
                 "audio_mouth_eyes_attached": False,
                 "dynamixel_controller_attached": False,
-                "arm_control_attached": False,
-                "head_control_enabled": False,
-                "arm_control_enabled": False
+                "arm_control_attached": False
             }
 
             # Check component statuses
@@ -93,8 +91,12 @@ class Core():
             self._controller.log_error(f"Error in core:ping: {e}")
             return None
 
-
     def versions(self):
+        """
+        Get the version numbers of the main controller, audio mouth eyes, dynamixel controller, and arm controller.
+
+        :return: A JSON string containing the version numbers of the components.
+        """
         try:
             self._controller.check_controller_init()
             self._controller.send_raw_command("VERSION")
@@ -116,4 +118,3 @@ class Core():
         except Exception as e:
             self._controller.log_error(f"Error in core:versions: {e}")
             return None
-            

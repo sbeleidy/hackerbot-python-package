@@ -1,3 +1,42 @@
+################################################################################
+# Copyright (c) 2025 Hackerbot Industries LLC
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+#
+# Created By: Allen Chien
+# Created:    April 2025
+# Updated:    2025.04.07
+#
+# This module contains the unit tests for the maps class.
+#
+# Special thanks to the following for their code contributions to this codebase:
+# Allen Chien - https://github.com/AllenChienXXX
+################################################################################
+
+import json
+import unittest
+from unittest.mock import patch, MagicMock, call
+import time
+import logging
+from hackerbot.utils.hackerbot_helper import HackerbotHelper
+from hackerbot.core import Core
+
+class TestHackerbotCore(unittest.TestCase):
+
+    def setUp(self):
+        self.mock_controller = MagicMock()
+
+        # Mock attributes
+        self.mock_controller._tofs_enabled = True
+        self.mock_controller._json_mode = True
+
+        # Mock method behaviors
+        self.mock_controller.check_controller_init.return_value = None
+        self.mock_controller.send_raw_command.return_value = None
+            
+
+
     def test_goto_pos_success(self):
         with patch.object(MainController, '__init__', return_value= None), \
              patch.object(MainController, 'send_raw_command', return_value= None):

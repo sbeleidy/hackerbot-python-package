@@ -150,11 +150,11 @@ class Base():
         """
         try:
             self._controller.send_raw_command("B_KILL")
-            self.driver_initialized = False
+            self._controller._base_init = False
             # Not fetching json response since machine mode not implemented
             return True
         except Exception as e:
-            self._controller.log_error(f"Error in base:stop_driver: {e}")
+            self._controller.log_error(f"Error in base:kill: {e}")
             return False
         
     def trigger_bump(self, left, right):
