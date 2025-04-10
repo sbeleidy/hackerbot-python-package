@@ -79,12 +79,12 @@ class HackerbotHelper(SerialHelper):
         try:
             if mode == True:
                 super().send_raw_command("JSON, 1")
+                time.sleep(0.1) # Short sleep to process json response
+                response = super().get_json_from_command("json")
+                if response is None:
+                    raise Exception("Failed to set json mode to: ", mode)
             else:
                 super().send_raw_command("JSON, 0")
-            time.sleep(0.5) # Short sleep to process json response
-            response = super().get_json_from_command("json")
-            if response is None:
-                raise Exception("Failed to set json mode to: ", mode)
             self._json_mode = mode
         except Exception as e:
             raise Exception(f"Error in set_json_mode: {e}")

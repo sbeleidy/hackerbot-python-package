@@ -4,9 +4,11 @@ import time
 def main():
     try:
         bot = Hackerbot(verbose_mode=True)
-        for _ in range(5):
-            bot.base.maps.goto(1, 1, 0, 0.4)
-            bot.base.maps.goto(0.5, 0.5, 180, 0.4)
+        for _ in range(100):
+            bot.base.maps.goto(1, 1, 0, 0.5)
+            bot.base.maps.goto(0.5, 1, 0, 0.5)
+            bot.base.maps.goto(0.5, 0.5, 180, 0.5)
+            bot.base.maps.goto(1, 0.5, 180, 0.5)
 
 
     except Exception as e:

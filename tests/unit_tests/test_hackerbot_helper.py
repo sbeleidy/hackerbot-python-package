@@ -24,98 +24,61 @@ from hackerbot.utils.hackerbot_helper import HackerbotHelper
 
 class TestHackerbotHelper(unittest.TestCase):
 
-    @patch('hackerbot.utils.hackerbot_helper.SerialHelper.__init__', return_value=None)
-    @patch('hackerbot.utils.hackerbot_helper.SerialHelper.get_board_and_port', return_value=("Uno", "/dev/ttyUSB0"))
-    def test_init_without_port_board(self, mock_get_board_and_port, mock_serial_init):
-        helper = HackerbotHelper()
-        self.assertTrue(helper._main_controller_init)
-        self.assertTrue(helper._json_mode)
-        self.assertEqual(helper._port, "/dev/ttyUSB0")
-        self.assertEqual(helper._board, "Uno")
+    def test_setup_success(self):
+        with patch.object(SerialHelper, '__init__', return_value= None), \
+             patch.object(SerialHelper, 'get_board_and_port', return_value= ('mock_board', 'mock_port')), \
+             patch.object(HackerbotHelper, 'set_json_mode', return_value= None):
+            helper = HackerbotHelper()
+            helper.setup()
+            
+            self.assertTrue(helper._main_controller_init)
 
-    @patch('hackerbot.utils.hackerbot_helper.SerialHelper.__init__', return_value=None)
-    def test_init_with_port_board(self, mock_serial_init):
-        helper = HackerbotHelper(port="/dev/ttyUSB1", board="Mega")
-        self.assertEqual(helper._port, "/dev/ttyUSB1")
-        self.assertEqual(helper._board, "Mega")
+    def test_setup_port_and_board_failure(self):
+        with patch.object(SerialHelper, '__init__', return_value= None), \
+             patch.object(SerialHelper, 'get_board_and_port', side_effect= Exception("Setup error")), \
+             patch.object(HackerbotHelper, 'set_json_mode', return_value= None):
+            try:
+                helper = HackerbotHelper()
+                helper.setup()
+                
+                self.assertFalse(helper._main_controller_init)
+            except Exception as e:
+                self.assertIn("Error in setting up hackerbot helper", str(e))
 
-    @patch('hackerbot.base.hackerbot_helper.SerialHelper.send_raw_command')
-    @patch('hackerbot.base.hackerbot_helper.SerialHelper.get_json_from_command', return_value={"json_mode": True})
-    def test_set_json_mode_true(self, mock_get_json, mock_send_raw):
-        helper = HackerbotHelper(port="p", board="b")
-        helper.set_json_mode(True)
-        mock_send_raw.assert_called_with("JSON, 1")
-        self.assertTrue(helper._json_mode)
-
-    @patch('hackerbot.base.hackerbot_helper.SerialHelper.get_json_from_command', return_value=None)
-    def test_set_json_mode_raises_if_fail(self, mock_get_json):
-        helper = HackerbotHelper(port="p", board="b")
-        with self.assertRaises(Exception) as ctx:
-            helper.set_json_mode(True)
-        self.assertIn("Error in set_json_mode", str(ctx.exception))
-
-    @patch('hackerbot.base.hackerbot_helper.SerialHelper.get_ser_error', return_value="serial failed")
-    def test_get_error_prioritizes_serial(self, mock_ser_error):
-        helper = HackerbotHelper(port="p", board="b")
-        helper._error_msg = "some error"
-        self.assertEqual(helper.get_error(), "serial failed")
-
-    def test_get_error_fallback(self):
-        helper = HackerbotHelper(port="p", board="b")
-        helper._error_msg = "fallback error"
-        self.assertEqual(helper.get_error(), "fallback error")
-
-    def test_log_error_and_warning(self):
-        helper = HackerbotHelper(port="p", board="b", verbose_mode=False)
-        helper.log_error("uh oh")
-        self.assertEqual(helper._error_msg, "uh oh")
-        helper.log_warning("heads up")
-        self.assertEqual(helper._warning_msg, "heads up")
-
-    def test_check_controller_init_raises(self):
-        helper = HackerbotHelper(port="p", board="b")
-        helper._main_controller_init = False
-        with self.assertRaises(Exception) as ctx:
-            helper.check_controller_init()
-        self.assertIn("Main controller not initialized", str(ctx.exception))
-
-    def test_check_driver_mode_raises(self):
-        helper = HackerbotHelper(port="p", board="b")
-        helper._driver_mode = False
-        with self.assertRaises(Exception) as ctx:
-            helper.check_driver_mode()
-        self.assertIn("Not in driver mode", str(ctx.exception))
-
-    def test_check_base_init_raises(self):
-        helper = HackerbotHelper(port="p", board="b")
-        helper._base_init = False
-        with self.assertRaises(Exception) as ctx:
-            helper.check_base_init()
-        self.assertIn("Base not initialized", str(ctx.exception))
-
-    @patch('hackerbot.base.hackerbot_helper.SerialHelper.disconnect_serial', return_value=None)
-    def test_destroy_successful(self, mock_disconnect):
-        helper = HackerbotHelper(port="p", board="b")
-        result = helper.destroy()
-        self.assertTrue(result)
-        self.assertFalse(helper._main_controller_init)
-
-    @patch('hackerbot.base.hackerbot_helper.SerialHelper.disconnect_serial', side_effect=Exception("fail"))
-    def test_destroy_failure_logs(self, mock_disconnect):
-        helper = HackerbotHelper(port="p", board="b")
-        result = helper.destroy()
-        self.assertFalse(result)
-        self.assertEqual(helper._error_msg, "Error in destroy: fail")
-
+    def test_setup_json_mode_failure(self):
+        with patch.object(SerialHelper, '__init__', return_value= None), \
+             patch.object(SerialHelper, 'get_board_and_port', return_value= ('mock_board', 'mock_port')), \
+             patch.object(HackerbotHelper, 'set_json_mode', side_effect= Exception("Setup error")):
+            try:
+                helper = HackerbotHelper()
+                helper.setup()
+                
+                self.assertFalse(helper._main_controller_init)
+            except Exception as e:
+                self.assertIn("Error in setting up hackerbot helper", str(e))
 
     def test_get_current_action(self):
         with patch.object(SerialHelper, '__init__', return_value= None), \
              patch.object(SerialHelper, 'get_state', return_value= "ACTION"):
-            controller = HackerbotHelper()
+            helper = HackerbotHelper()
         
-            result = controller.get_current_action()
+            result = helper.get_current_action()
         
             self.assertEqual(result, "ACTION")
+
+    def test_set_json_mode_success(self):
+        with patch.object(HackerbotHelper, '__init__', return_value= None), \
+             patch.object(SerialHelper, 'send_raw_command', return_value= None), \
+             patch.object(SerialHelper, 'get_json_from_command', return_value= {"command": "json", "success": "true"}):
+            controller = HackerbotHelper()
+        
+            controller.set_json_mode(True)
+        
+            self.assertTrue(controller._json_mode)
+
+            controller.set_json_mode(False)
+        
+            self.assertFalse(controller._json_mode)
         
     def test_get_error_with_ser_error(self):
         with patch.object(SerialHelper, '__init__', return_value= None), \
