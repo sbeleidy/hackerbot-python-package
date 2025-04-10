@@ -92,19 +92,19 @@ class HackerbotHelper(SerialHelper):
     #Set TOFs
     def set_TOFs(self, mode):
         try:
-            if not self._tofs_attached:
+            if not self._left_tof_attached or not self._right_tof_attached:
                 raise Exception("TOFs not attached")
             if mode == True:
                 super().send_raw_command("TOFS, 1")
             else:
                 super().send_raw_command("TOFS, 0")
-            time.sleep(0.5) # Short sleep to process json response
+            time.sleep(0.1) # Short sleep to process json response
             response = super().get_json_from_command("tofs")
             if response is None:
                 raise Exception("TOFs activation failed")
-            self._tofs_enabled = True
+            self._tofs_enabled = mode
         except Exception as e:
-            raise Exception(f"Error in enable TOFs: {e}")
+            raise Exception(f"Error in set_TOFs: {e}")
 
     def get_current_action(self):
         return super().get_state()

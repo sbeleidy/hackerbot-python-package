@@ -71,6 +71,7 @@ class TestHackerbotHelper(unittest.TestCase):
              patch.object(SerialHelper, 'send_raw_command', return_value= None), \
              patch.object(SerialHelper, 'get_json_from_command', return_value= {"command": "json", "success": "true"}):
             controller = HackerbotHelper()
+            controller._json_mode = False
         
             controller.set_json_mode(True)
         
@@ -79,7 +80,55 @@ class TestHackerbotHelper(unittest.TestCase):
             controller.set_json_mode(False)
         
             self.assertFalse(controller._json_mode)
+
+    def test_set_json_mode_failure(self):
+        with patch.object(HackerbotHelper, '__init__', return_value= None), \
+             patch.object(SerialHelper, 'send_raw_command', return_value= None), \
+             patch.object(SerialHelper, 'get_json_from_command', return_value= None):
+            try:
+                controller = HackerbotHelper()
+                controller._json_mode = False
+            
+                controller.set_json_mode(True)
+
+            except Exception as e:
+                self.assertIn("Error in set_json_mode", str(e))
+                self.assertFalse(controller._json_mode)
+
+    
+    def test_set_tofs_success(self):
+        with patch.object(HackerbotHelper, '__init__', return_value= None), \
+             patch.object(SerialHelper, 'send_raw_command', return_value= None), \
+             patch.object(SerialHelper, 'get_json_from_command', return_value= {"command": "tofs", "success": "true"}):
+            controller = HackerbotHelper()
+            controller._left_tof_attached = True
+            controller._right_tof_attached = True
+            controller._tofs_enabled = False
         
+            controller.set_TOFs(True)
+        
+            self.assertTrue(controller._tofs_enabled)
+
+            controller.set_TOFs(False)
+        
+            self.assertFalse(controller._tofs_enabled)
+
+    def test_set_tofs_failure(self):
+        with patch.object(HackerbotHelper, '__init__', return_value= None), \
+             patch.object(SerialHelper, 'send_raw_command', return_value= None), \
+             patch.object(SerialHelper, 'get_json_from_command', return_value= None):
+            try:
+                controller = HackerbotHelper()
+                controller._left_tof_attached = True
+                controller._right_tof_attached = True
+                controller._tofs_enabled = False
+            
+                controller.set_TOFs(True)
+
+            except Exception as e:
+                self.assertIn("Error in set_TOFs", str(e))
+                self.assertFalse(controller._tofs_enabled)
+            
     def test_get_error_with_ser_error(self):
         with patch.object(SerialHelper, '__init__', return_value= None), \
              patch.object(SerialHelper, 'get_ser_error', return_value= "Serial error"):
