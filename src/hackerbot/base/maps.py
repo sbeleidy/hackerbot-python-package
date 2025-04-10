@@ -21,6 +21,12 @@ import time
 class Maps():
     def __init__(self, controller: HackerbotHelper):
         self._controller = controller
+        self._goto_completed = False
+
+        self.map_id = None
+        self.x = None
+        self.y = None
+        self.angle = None
 
     # Returns a string of map data
     def fetch(self, map_id):
@@ -34,7 +40,7 @@ class Maps():
                 raise Exception("No map {map_id} found")
             return map_data_json.get("compressedmapdata")
         except Exception as e:
-            self.log_error(f"Error in maps:fetch: {e}")
+            self._controller.log_error(f"Error in maps:fetch: {e}")
             return None
     
     # Returns a list of map ids
@@ -50,13 +56,45 @@ class Maps():
         except Exception as e:
             self.log_error(f"Error in maps:list: {e}")
             return None
-
+        
     def goto(self, x, y, angle, speed):
+        """
+        Move the robot to the specified location on the map.
+
+        Args:
+            x (float): The x coordinate of the location to move to, in meters.
+            y (float): The y coordinate of the location to move to, in meters.
+            angle (float): The angle of the location to move to, in degrees.
+            speed (float): The speed at which to move to the location, in meters per second.
+
+        Returns:
+            bool: True if the command was successfully sent, False if an error occurred.
+        """
         try:
             command = f"B_GOTO,{x},{y},{angle},{speed}"
             self._controller.send_raw_command(command)
             # Not fetching json response since machine mode not implemented
+            if self._docked == True:
+                time.sleep(3)
             return True
         except Exception as e:
-            self.log_error(f"Error in maps:goto: {e}")
+            self._controller.log_error(f"Error in maps:goto: {e}")
             return False
+        
+    def position(self):
+        try:
+            self._controller.send_raw_command("B_POSE")
+            pose = self._controller.get_json_from_command("position")
+            if pose is None:
+                raise Exception("No position found")
+            self.map_id = pose.get("map_id")
+            self.x = pose.get("pose_x")
+            self.y = pose.get("pose_y")
+            self.angle = pose.get("pose_angle")
+            # Not fetching json response since machine mode not implemented
+            return True
+        except Exception as e:
+            self._controller.log_error(f"Error in base:position: {e}")
+            return False
+        
+    # def wait_until_reach_pose(self):

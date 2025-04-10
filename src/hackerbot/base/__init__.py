@@ -83,24 +83,16 @@ class Base():
             self._controller.log_error(f"Error in base:status: {e}")
             return None
         
-    def position(self):
-        try:
-            self._controller.send_raw_command("B_POSE")
-            # Not fetching json response since machine mode not implemented
-            return True
-        except Exception as e:
-            self._controller.log_error(f"Error in base:position: {e}")
-            return False
-        
     def start(self):
         try:
             self._controller.send_raw_command("B_START")
             # Not fetching json response since machine mode not implemented
             self._controller._driver_mode = True
-            # self.wait_until_completed()
             if self._docked:
                 time.sleep(3)
                 self._docked = False
+            self.wait_until_completed()
+
             return True
         except Exception as e:
             self._controller.log_error(f"Error in base:start: {e}")
@@ -143,6 +135,7 @@ class Base():
             # Not fetching json response since machine mode not implemented
             self.wait_until_completed()
             self._docked = True
+            self._controller._driver_mode = False
             return True
         except Exception as e:
             self._controller.log_error(f"Error in base:dock: {e}")
@@ -193,7 +186,6 @@ class Base():
         try:
             if not self._controller._driver_mode:
                 self.start()
-                time.sleep(2)
             self._controller.send_raw_command(f"B_DRIVE,{l_vel},{a_vel}")
             time.sleep(0.1)
             response = self._controller.get_json_from_command("drive")
@@ -208,6 +200,7 @@ class Base():
     def wait_until_completed(self):
         while not self._future_completed:
             self.status()
+            print(self.status())
         self._future_completed = False
         
     def destroy(self, auto_dock=False):

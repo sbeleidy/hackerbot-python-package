@@ -17,14 +17,13 @@ def main():
         # bot.base.drive(-500, 0)
         # bot.base.drive(100, 0)
         # bot.base.drive(0, 360)
-        for i in range(5):
-            print("Starting")
-            bot.base.start()
+        for i in range(10):
             print("Driving")
             bot.base.drive(-500, 0)
-            bot.base.drive(0, 90)
+            bot.base.drive(0, -180)
             bot.base.drive(100, 0)
-            bot.base.drive(0, 90)
+            bot.base.drive(0, -180)
+            bot.base.drive(100, 0)
             print("Docking")
             bot.base.dock()
 
