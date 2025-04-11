@@ -15,7 +15,7 @@
 ################################################################################
 
 
-import hackerbot_helper as hhp
+from hackerbot import Hackerbot
 import time
 import os
 
@@ -24,15 +24,12 @@ from select import select
 from base_teleop import BaseTeleop, KBHit
 from head_teleop import HeadTeleop
 
-class AI_PRO_Teleop(BaseTeleop, HeadTeleop):
+class AI_PRO_Teleop():
     def __init__(self):
         self.kb = KBHit()
 
-        self.robot = hhp.ProgrammedController()
-        self.robot.init_driver()
-        self.robot.activate_machine_mode()
-        self.robot.leave_base()
-        self.robot.get_ping() 
+        self.robot = Hackerbot()
+        self.robot.base.initialize()
         
         # Modify movement parameters
         self.step_size = 0.2 # mm
@@ -70,7 +67,7 @@ class AI_PRO_Teleop(BaseTeleop, HeadTeleop):
 
     def update_display(self):
         """Update step size and speed in place without adding new lines"""
-        sys.stdout.write(f"\rCurrent step size: {self.step_size:.1f}° | Current joint speed: {self.joint_speed}%    ")
+        sys.stdout.write(f"\rCurrent step size: {self.step_size:.1f} | Current joint speed: {self.joint_speed}    ")
         sys.stdout.flush()  # Ensure immediate update
 
     def get_command(self):
@@ -132,10 +129,10 @@ class AI_PRO_Teleop(BaseTeleop, HeadTeleop):
             if input_1 is not None and input_2 is not None:
                 response = None  # Initialize response
                 if self.base_command:
-                    response = self.robot.move(input_1, input_2)
+                    response = self.robot.base.drive(input_1, input_2, block=False)
                     time.sleep(0.01)
                 elif self.head_command:
-                    response = self.robot.move_head(input_1, input_2, self.joint_speed)
+                    response = self.robot.head.look(input_1, input_2, self.joint_speed)
                     time.sleep(0.01)
                 if response == False:
                     break
@@ -145,19 +142,16 @@ class AI_PRO_Teleop(BaseTeleop, HeadTeleop):
             self.update_display()
 
     def stow(self):
-        self.robot.move_head(180,180,50)
-        time.sleep(1)
-        self.robot.dock()
+        self.robot.head.look(180,180,50)
 
     def cleanup(self):
         """Cleanup method to properly shut down the robot and restore terminal settings"""
         try:
             # Restore terminal settings
             self.kb.set_normal_term()
-            # self.robot.stop_driver()
             self.stow()
             # Destroy the robot connection
-            self.robot.destroy()
+            self.robot.base.destroy(auto_dock=True)
             
         except Exception as e:
             print(f"\nError during cleanup: {e}")

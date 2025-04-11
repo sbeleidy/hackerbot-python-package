@@ -15,7 +15,7 @@
 ################################################################################
 
 
-import hackerbot_helper as hhp
+from hackerbot import Hackerbot
 import time
 import os
 
@@ -29,11 +29,8 @@ class AI_ELITE_Teleop(ArmTeleop, BaseTeleop, HeadTeleop):
     def __init__(self):
         self.kb = KBHit()
 
-        self.robot = hhp.ProgrammedController()
-        self.robot.init_driver()
-        self.robot.activate_machine_mode()
-        self.robot.leave_base()
-        self.robot.get_ping() 
+        self.robot = Hackerbot()
+        self.robot.base.initialize()
         
         # Modify movement parameters
         self.step_size = 0.2 # mm
@@ -85,7 +82,7 @@ class AI_ELITE_Teleop(ArmTeleop, BaseTeleop, HeadTeleop):
 
     def update_display(self):
         """Update step size and speed in place without adding new lines"""
-        sys.stdout.write(f"\rCurrent step size: {self.step_size:.1f}° | Current joint speed: {self.joint_speed}%    ")
+        sys.stdout.write(f"\rCurrent step size: {self.step_size:.1f} | Current joint speed: {self.joint_speed}    ")
         sys.stdout.flush()  # Ensure immediate update
 
     def get_command(self):
@@ -152,10 +149,10 @@ class AI_ELITE_Teleop(ArmTeleop, BaseTeleop, HeadTeleop):
             if input_1 is not None and input_2 is not None:
                 response = None  # Initialize response
                 if self.base_command:
-                    response = self.robot.move(input_1, input_2)
+                    response = self.robot.base.drive(input_1, input_2, block=False)
                     time.sleep(0.01)
                 elif self.head_command:
-                    response = self.robot.move_head(input_1, input_2, self.joint_speed)
+                    response = self.robot.head.look(input_1, input_2, self.joint_speed)
                     time.sleep(0.01)
                 elif self.arm_command:
                     command = input_1
@@ -164,13 +161,13 @@ class AI_ELITE_Teleop(ArmTeleop, BaseTeleop, HeadTeleop):
                         # Limit joint angles based on which joint
                         max_angle = 175.0 if command == 6 else 165.0
                         if abs(value) <= max_angle:
-                            response = self.robot.move_single_joint(command, value, self.joint_speed)
+                            response = self.robot.arm.move_joint(command, value, self.joint_speed)
                     elif command == 'gripper_open':
-                        response = self.robot.open_gripper()
+                        response = self.robot.arm.gripper.open()
                     elif command == 'gripper_close':
-                        response = self.robot.close_gripper()
+                        response = self.robot.arm.gripper.close()
                     elif command == 'gripper_calibrate':
-                        response = self.robot.arm_calibrate()
+                        response = self.robot.arm.gripper.calibrate()
                     
                     time.sleep(0.2)
 
@@ -182,10 +179,8 @@ class AI_ELITE_Teleop(ArmTeleop, BaseTeleop, HeadTeleop):
             self.update_display()
 
     def stow(self):
-        self.robot.move_all_joint(0,0,0,0,0,0,50) 
-        self.robot.move_head(180,180,50)
-        time.sleep(1)
-        self.robot.dock()
+        self.robot.arm.move_joints(0,0,0,0,0,0,50) 
+        self.robot.head.look(180,180,50)
 
     def cleanup(self):
         """Cleanup method to properly shut down the robot and restore terminal settings"""
@@ -195,7 +190,7 @@ class AI_ELITE_Teleop(ArmTeleop, BaseTeleop, HeadTeleop):
             # self.robot.stop_driver()
             self.stow()
             # Destroy the robot connection
-            self.robot.destroy()
+            self.robot.base.destroy(auto_dock=True)
             
         except Exception as e:
             print(f"\nError during cleanup: {e}")

@@ -111,6 +111,7 @@ class Base():
         """
         try:
             self._controller.send_raw_command("B_QUICKMAP")
+            time.sleep(0.1)
             # Not fetching json response since machine mode not implemented
             self._wait_until_completed(block=block)
             return True
@@ -118,7 +119,7 @@ class Base():
             self._controller.log_error(f"Error in base:quickmap: {e}")
             return False
         
-    def dock(self, block=False):
+    def dock(self, block=True):
         """
         Dock the base to the docking station.
 
@@ -131,7 +132,7 @@ class Base():
         """
         try:
             self._controller.send_raw_command("B_DOCK")
-            time.sleep(2)
+            time.sleep(3)
             # Not fetching json response since machine mode not implemented
             self._wait_until_completed(block=block)
             self._docked = True
@@ -187,7 +188,7 @@ class Base():
             if not self._controller._driver_mode:
                 self.start()
             self._controller.send_raw_command(f"B_DRIVE,{l_vel},{a_vel}")
-            time.sleep(0.1)
+            time.sleep(0.2)
             response = self._controller.get_json_from_command("drive")
             if response is None:
                 raise Exception("Drive command failed")
@@ -218,5 +219,5 @@ class Base():
         self.kill()
         if auto_dock:
             time.sleep(3.0)
-            self.dock()
+            self.dock(block=False)
         self._controller.destroy()

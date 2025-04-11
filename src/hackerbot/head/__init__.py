@@ -39,6 +39,7 @@ class Head():
     # int: speed - Unitless. Valid values are integers in the range of 6 (slow) to 70 (fast)
     def look(self, yaw, pitch, speed):
         try:
+            self.set_idle_mode(False)
             self._controller.send_raw_command(f"H_LOOK, {yaw}, {pitch}, {speed}")
             # Not fetching json response since machine mode not implemented
             return True
