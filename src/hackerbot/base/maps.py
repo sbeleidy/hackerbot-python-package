@@ -85,7 +85,7 @@ class Maps():
             self._controller.log_error(f"Error in maps:list: {e}")
             return None
         
-    def goto(self, x, y, angle, speed):
+    def goto(self, x, y, angle, speed, block=True):
         """
         Move the robot to the specified location on the map.
 
@@ -108,7 +108,8 @@ class Maps():
             if self._docked == True:
                 time.sleep(2) # Some time to leave the base
                 self._docked = False
-            self._wait_until_reach_pose()
+            if block:
+                self._wait_until_reach_pose()
             return True
         except Exception as e:
             self._controller.log_error(f"Error in maps:goto: {e}")

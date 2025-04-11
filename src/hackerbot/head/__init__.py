@@ -34,6 +34,9 @@ class Head():
 
         self.set_idle_mode(True)
         
+    # float: yaw - Unit is in degrees (eg. 180 degrees). Valid values are in the range of 100.0 to 260.0
+    # float: pitch - Unit is in degrees (eg. 180 degrees). Valid values are in the range of 150.0 to 250.0
+    # int: speed - Unitless. Valid values are integers in the range of 6 (slow) to 70 (fast)
     def look(self, yaw, pitch, speed):
         try:
             self._controller.send_raw_command(f"H_LOOK, {yaw}, {pitch}, {speed}")

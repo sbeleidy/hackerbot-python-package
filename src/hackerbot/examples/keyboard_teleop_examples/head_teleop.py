@@ -15,7 +15,7 @@
 ################################################################################
 
 
-import hackerbot_helper as hhp
+from hackerbot import Hackerbot
 import time
 import os
 
@@ -27,11 +27,8 @@ class HeadTeleop:
     def __init__(self):
         self.kb = KBHit()
 
-        self.robot = hhp.ProgrammedController()
-        self.robot.init_driver()
-        self.robot.activate_machine_mode()
-        # self.robot.leave_base()
-        self.robot.get_ping() 
+        self.robot = Hackerbot()
+        self.robot.head.set_idle_mode(False)
         
         # Modify movement parameters
         self.joint_speed = 50
@@ -128,7 +125,7 @@ class HeadTeleop:
         while not self.stop:
             y, p = self.get_head_command()
             if y is not None and p is not None:
-                response = self.robot.move_head(y, p, self.joint_speed)
+                response = self.robot.head.look(y, p, self.joint_speed)
 
             time.sleep(0.2)
             if response == False:
@@ -141,9 +138,7 @@ class HeadTeleop:
             # Restore terminal settings
             self.kb.set_normal_term()
             # Dock the robot
-            # self.robot.dock()
-            self.robot.move_head(180,180,50) 
-            time.sleep(2) 
+            self.robot.head.look(180,180,50) 
             # Destroy the robot connection
             self.robot.destroy()
             

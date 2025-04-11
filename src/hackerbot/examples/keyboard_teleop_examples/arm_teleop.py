@@ -15,7 +15,7 @@
 ################################################################################
 
 
-import hackerbot_helper as hhp
+from hackerbot import Hackerbot
 import time
 import os
 
@@ -27,11 +27,9 @@ class ArmTeleop:
     def __init__(self):
         self.kb = KBHit()
 
-        self.robot = hhp.ProgrammedController()
-        self.robot.init_driver()
-        self.robot.activate_machine_mode()
-        # self.robot.leave_base()
-        self.robot.get_ping() 
+        self.robot = Hackerbot()
+        self.robot.base.initialize()
+
         
         # Modify movement parameters
         self.arm_speed = 50
@@ -178,14 +176,14 @@ class ArmTeleop:
                     # Limit joint angles based on which joint
                     max_angle = 175.0 if command == 6 else 165.0
                     if abs(value) <= max_angle:
-                        response = self.robot.move_single_joint(command, value, self.arm_speed)
+                        response = self.robot.arm.move_joint(command, value, self.arm_speed)
 
                 elif command == 'gripper_open':
-                    response = self.robot.open_gripper()
+                    response = self.robot.arm.gripper.open()
                 elif command == 'gripper_close':
-                    response = self.robot.close_gripper()
+                    response = self.robot.arm.gripper.close()
                 elif command == 'gripper_calibrate':
-                    response = self.robot.arm_calibrate()
+                    response = self.robot.arm.gripper.calibrate()
                 
                 if response == False:
                     break
@@ -199,7 +197,7 @@ class ArmTeleop:
             self.kb.set_normal_term()
             # Dock the robot
             # self.robot.dock()
-            self.robot.move_all_joint(0,0,0,0,0,0,50) 
+            self.robot.arm.move_joints(0,0,0,0,0,0,50) 
             time.sleep(2) 
             # Destroy the robot connection
             self.robot.destroy()

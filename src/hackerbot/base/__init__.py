@@ -83,7 +83,7 @@ class Base():
             self._controller.log_error(f"Error in base:status: {e}")
             return None
         
-    def start(self):
+    def start(self, block=True):
         try:
             self._controller.send_raw_command("B_START")
             # Not fetching json response since machine mode not implemented
@@ -91,14 +91,14 @@ class Base():
             if self._docked:
                 time.sleep(3)
                 self._docked = False
-            self._wait_until_completed()
+            self._wait_until_completed(block=block)
 
             return True
         except Exception as e:
             self._controller.log_error(f"Error in base:start: {e}")
             return False
         
-    def quickmap(self):
+    def quickmap(self, block=True):
         """
         Start the quick mapping process.
 
@@ -112,13 +112,13 @@ class Base():
         try:
             self._controller.send_raw_command("B_QUICKMAP")
             # Not fetching json response since machine mode not implemented
-            self._wait_until_completed()
+            self._wait_until_completed(block=block)
             return True
         except Exception as e:
             self._controller.log_error(f"Error in base:quickmap: {e}")
             return False
         
-    def dock(self):
+    def dock(self, block=False):
         """
         Dock the base to the docking station.
 
@@ -133,7 +133,7 @@ class Base():
             self._controller.send_raw_command("B_DOCK")
             time.sleep(2)
             # Not fetching json response since machine mode not implemented
-            self._wait_until_completed()
+            self._wait_until_completed(block=block)
             self._docked = True
             self._controller._driver_mode = False
             return True
@@ -175,7 +175,7 @@ class Base():
             self._controller.log_error(f"Error in base:trigger_bump: {e}")
             return False
         
-    def drive(self, l_vel, a_vel):
+    def drive(self, l_vel, a_vel, block=True):
         """
         Set the base velocity.
 
@@ -191,13 +191,15 @@ class Base():
             response = self._controller.get_json_from_command("drive")
             if response is None:
                 raise Exception("Drive command failed")
-            self._wait_until_completed()
+            self._wait_until_completed(block=block)
             return True
         except Exception as e:
             self._controller.log_error(f"Error in base:drive: {e}")
             return False
         
-    def _wait_until_completed(self):
+    def _wait_until_completed(self, block=True):
+        if not block:
+            return
         while not self._future_completed:
             self.status()
             # print(self.status())

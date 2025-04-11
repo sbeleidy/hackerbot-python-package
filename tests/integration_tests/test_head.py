@@ -5,7 +5,10 @@ def main():
     try:
         bot = Hackerbot(verbose_mode=True)
         print("Looking")
-        bot.head.look(180, 180, 100)
+        bot.head.set_idle_mode(False)
+        bot.head.look(0, 0, 70)
+        time.sleep(1)
+        bot.head.look(180, 180, 70)
         
 
 

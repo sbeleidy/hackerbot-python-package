@@ -15,7 +15,7 @@
 ################################################################################
 
 
-import hackerbot_helper as hhp
+from hackerbot import Hackerbot
 import time
 import os
 
@@ -75,11 +75,8 @@ class BaseTeleop:
     def __init__(self):
         self.kb = KBHit()
 
-        self.robot = hhp.ProgrammedController()
-        self.robot.init_driver()
-        self.robot.activate_machine_mode()
-        self.robot.leave_base()
-        self.robot.get_ping() 
+        self.robot = Hackerbot()
+        self.robot.base.initialize()
         
         # Modify movement parameters
         self.step_size = 0.2 # mm
@@ -166,24 +163,20 @@ class BaseTeleop:
         while not self.stop:
             l_vel, r_vel = self.get_command()
             if l_vel is not None and r_vel is not None:
-                respone = self.robot.move(l_vel, r_vel)
+                respone = self.robot.base.drive(l_vel, r_vel, block=False)
                 if respone == False:
                     break
-                # print(f"l_vel: {l_vel}, r_vel: {r_vel}\r")
             l_vel = None
             r_vel = None
-            time.sleep(0.01)
+            # time.sleep(0.01)
             self.update_display()
     def cleanup(self):
         """Cleanup method to properly shut down the robot and restore terminal settings"""
         try:
             # Restore terminal settings
             self.kb.set_normal_term()
-            # Dock the robot
-            self.robot.dock()
-            time.sleep(2) 
             # Destroy the robot connection
-            self.robot.destroy()
+            self.robot.base.destroy(auto_dock=True)
             
         except Exception as e:
             print(f"\nError during cleanup: {e}")
