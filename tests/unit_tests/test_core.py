@@ -229,7 +229,7 @@ class TestHackerbotCore(unittest.TestCase):
         self.assertFalse(self.mock_controller._dynamixel_controller_attached)
         self.assertFalse(self.mock_controller._arm_attached)
 
-    def test_versions_success(self):
+    def test_version_success(self):
         sample_response = {
             "main_controller": "v7", 
             "audio_mouth_eyes": "v7", 
@@ -251,7 +251,7 @@ class TestHackerbotCore(unittest.TestCase):
             "arm_controller_version": "v7"
         }
 
-        result = core.versions()
+        result = core.version()
         self.assertEqual(json.loads(result), expected_output)
         
     def test_versions_failure(self):
@@ -261,6 +261,6 @@ class TestHackerbotCore(unittest.TestCase):
 
         core = Core(self.mock_controller)
 
-        result = core.versions()
+        result = core.version()
         self.assertEqual(result, None)
         self.mock_controller.log_error.assert_called_with("Error in core:versions: No response from main controller")

@@ -4,7 +4,7 @@ def main():
     try:
         bot = Hackerbot(verbose_mode=True) # Automatically called ping
         print(bot.core.ping())
-        print(bot.core.versions())
+        print(bot.core.version())
 
 
     except Exception as e:
