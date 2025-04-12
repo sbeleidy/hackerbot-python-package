@@ -91,7 +91,7 @@ class Core():
             self._controller.log_error(f"Error in core:ping: {e}")
             return None
 
-    def versions(self):
+    def version(self):
         """
         Get the version numbers of the main controller, audio mouth eyes, dynamixel controller, and arm controller.
 
