@@ -4,6 +4,7 @@ import time
 def main():
     try:
         bot = Hackerbot(verbose_mode=True)
+        bot.set_TOFs(False)
         # bot.base.initialize()
         # bot.base.set_mode(2)
         # bot.base.status()
@@ -20,8 +21,6 @@ def main():
         for i in range(10):
             print("Drive", -500, 0)
             bot.base.drive(-500, 0)
-            print("Drive", 100, 0)
-            bot.base.drive(100, 0)
             print("Drive", 0, -180)
             bot.base.drive(0, -180)
             print("Drive", 100, 0)

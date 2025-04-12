@@ -6,12 +6,15 @@ def main():
         bot = Hackerbot(verbose_mode=True)
         # bot.arm.move_joint(1, 0, 100)
         bot.arm.move_joints(0, 0, 0, 0, 0, 0, 100)
-        # print("Opening gripper")
-        # bot.arm.gripper.open()
-        # print("Closing gripper")
-        # bot.arm.gripper.close()
-        # print("Calibrating gripper")
-        # bot.arm.gripper.calibrate()
+        time.sleep(1)
+        print("Opening gripper")
+        bot.arm.gripper.open()
+        time.sleep(1)
+        print("Closing gripper")
+        bot.arm.gripper.close()
+        time.sleep(1)
+        print("Calibrating gripper")
+        bot.arm.gripper.calibrate()
 
 
 

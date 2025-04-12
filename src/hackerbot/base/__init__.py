@@ -89,7 +89,7 @@ class Base():
             # Not fetching json response since machine mode not implemented
             self._controller._driver_mode = True
             if self._docked:
-                time.sleep(3)
+                time.sleep(2)
                 self._docked = False
             self._wait_until_completed(block=block)
 
@@ -188,7 +188,7 @@ class Base():
             if not self._controller._driver_mode:
                 self.start()
             self._controller.send_raw_command(f"B_DRIVE,{l_vel},{a_vel}")
-            time.sleep(0.2)
+            time.sleep(0.1)
             response = self._controller.get_json_from_command("drive")
             if response is None:
                 raise Exception("Drive command failed")
