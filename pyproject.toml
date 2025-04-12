@@ -17,7 +17,7 @@
 
 [project]
 name = "hackerbot"
-version = "0.2"
+version = "0.2.0"
 description = "This module contains the setup for the hackerbot python package."
 authors = [
   { name = "Allen Chien", email = "allen71090@gmail.com" }
