@@ -5,3 +5,4 @@ src/hackerbot/arm/__pycache__/
 src/hackerbot/base/__pycache__/
 src/hackerbot/head/__pycache__/
 src/hackerbot/utils/__pycache__/
+dist/
