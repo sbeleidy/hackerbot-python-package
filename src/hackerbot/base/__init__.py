@@ -17,6 +17,7 @@
 
 from hackerbot.utils.hackerbot_helper import HackerbotHelper
 from .maps import Maps
+from .speech import Speech
 import time
 
 class Base():    
@@ -30,6 +31,7 @@ class Base():
         self.initialize() # Call before any action is done on the base
 
         self.maps = Maps(controller)
+        self.speech = Speech(controller)
 
         self._future_completed = False
         self._docked = True # Default to true, assume always start from charger
