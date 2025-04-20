@@ -5,18 +5,7 @@ def main():
     try:
         bot = Hackerbot(verbose_mode=True)
         print("Looking")
-        bot.head.set_idle_mode(False)
-        bot.head.look(0, 180, 70)
-        time.sleep(1)
-        bot.head.look(180, 180, 70)
-        time.sleep(1)
-        bot.head.look(260, 150, 70)
-        time.sleep(1)
-        bot.head.look(260, 250, 70)
-        time.sleep(1)
-        bot.head.look(180, 180, 70)
-        time.sleep(1)
-        bot.head.set_idle_mode(True)
+        bot.head.speak(model_src="/home/bobby/hackerbot/hackerbot-python-package/src/hackerbot/head/models/en_GB-semaine-medium.onnx",text="Hello, I'm looking for Allen", speaker_id=1)
 
     except Exception as e:
         print(e)
