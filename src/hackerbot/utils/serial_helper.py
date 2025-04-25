@@ -23,6 +23,7 @@ import threading
 import os
 import json
 from collections import deque
+import time
 
 class SerialHelper:
     HOME_DIR = os.environ['HOME']
@@ -39,7 +40,7 @@ class SerialHelper:
         self.state = None
         self.ser_error = None
 
-        self.json_entries = deque(maxlen=10)  # Store up to 10 most recent JSON entries
+        self.json_entries = deque(maxlen=20)  # Store up to 10 most recent JSON entries
 
         try:
             if self.port is None:
@@ -123,15 +124,20 @@ class SerialHelper:
     def get_json_from_command(self, command_filter=None):
         if command_filter is None:
             raise ValueError("command_filter cannot be None")
-        if self.json_entries is None or len(self.json_entries) == 0:
-            raise ValueError("No JSON entries found")
-        
-        for entry in reversed(self.json_entries):
-            if entry.get("command") == command_filter:
-                if entry.get("success") == "true":
-                    return entry
-                raise Exception("Fail to fetch...")
-        raise Exception(f"Command {command_filter} not found in JSON entries")
+
+        for attempt in range(5):
+            if self.json_entries is None or len(self.json_entries) == 0:
+                time.sleep(0.1)
+                continue
+
+            for entry in reversed(self.json_entries):
+                if entry.get("command") == command_filter:
+                    if entry.get("success") == "true":
+                        return entry
+                    raise Exception("Fail to fetch...")
+            time.sleep(0.1)
+
+        raise Exception(f"Command {command_filter} not found in JSON entries after 5 retries")
             
     def stop_read_thread(self):
         """Call this method to stop the serial reading thread."""
