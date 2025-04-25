@@ -17,10 +17,10 @@
 
 [project]
 name = "hackerbot"
-version = "0.3.0"
+version = "0.4.0"
 description = "This module contains the setup for the hackerbot python package."
 authors = [
-  { name = "Allen Chien", email = "allen71090@gmail.com" }
+  { name = "Allen Chien", email = "allen@hackerbot.co" }
 ]
 license = "MIT"
 readme = "README.md"
