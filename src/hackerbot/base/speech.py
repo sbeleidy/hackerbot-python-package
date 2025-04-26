@@ -8,7 +8,7 @@ class Speech:
         Args:
             controller (HackerbotHelper): The main controller for this HackerBot
         """
-        self.controller = controller
+        self._controller = controller
         self.voice = "en_US-amy-low"
         self.engine = "aplay"
         self._dt = Dimits(self.voice)
