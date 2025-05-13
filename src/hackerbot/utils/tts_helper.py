@@ -14,6 +14,10 @@
 # Special thanks to the following for their code contributions to this codebase:
 # Allen Chien - https://github.com/AllenChienXXX
 # Saad Elbeleidy - https://github.com/sbeleidy
+#
+# Credits:
+# This project makes use of functionality inspired by or adapted from:
+# Dimits - https://github.com/Reqeique/Dimits
 ################################################################################
 
 
