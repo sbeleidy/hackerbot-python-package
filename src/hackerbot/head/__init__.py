@@ -6,7 +6,7 @@
 #
 # Created By: Allen Chien
 # Created:    April 2025
-# Updated:    2025.04.07
+# Updated:    2025.04.20
 #
 # This module contains the Head component of the hackerbot
 #
@@ -17,6 +17,9 @@
 
 from hackerbot.utils.hackerbot_helper import HackerbotHelper
 from .eyes import Eyes
+import sounddevice as sd
+from piper.voice import PiperVoice
+import numpy as np
 
 class Head():
     def __init__(self, controller: HackerbotHelper):
@@ -59,3 +62,26 @@ class Head():
         except Exception as e:
             self._controller.log_error(f"Error in head:set_idle_mode: {e}")
             return False
+        
+    def speak(self, model_src, text, speaker_id = None):
+        model = model_src
+        voice = PiperVoice.load(model)
+
+        # Setup a sounddevice OutputStream with appropriate parameters
+        # The sample rate and channels should match the properties of the PCM data
+        stream = sd.OutputStream(
+            samplerate=voice.config.sample_rate,
+            channels=1,
+            dtype='int16',
+            blocksize=0  # Let sounddevice choose blocksize automatically
+        )
+
+        with stream:  # This automatically handles start/stop/close
+            for audio_bytes in voice.synthesize_stream_raw(text, speaker_id=speaker_id):
+                int_data = np.frombuffer(audio_bytes, dtype=np.int16)
+                stream.write(int_data)
+
+            # At this point, all data has been written,
+            # but we need to wait for any remaining buffered audio to play out.
+            stream.stop()  # Ensure stream stops cleanly
+            print("Finished speaking.")  # <-- You now know it's done

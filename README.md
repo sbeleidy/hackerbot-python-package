@@ -1,4 +1,3 @@
-
 # Hackerbot Python Package
 
 Hackerbot python package (`hackerbot-python-package`) is a project that includes modules for controlling and managing the Hackerbot system.
