@@ -16,6 +16,7 @@
 
 
 from hackerbot.utils.hackerbot_helper import HackerbotHelper
+from hackerbot.utils.tts_helper import TTSHelper
 from .maps import Maps
 import time
 import sounddevice as sd
@@ -242,9 +243,15 @@ class Base():
             None
         """
         try:
-            model = model_src
             try:
-                voice = PiperVoice.load(model)
+                tts_helper = TTSHelper()
+                model_path = tts_helper.get_or_download_model(model_src)
+            except Exception as e:
+                self._controller.log_error(str(e))
+                return
+
+            try:
+                voice = PiperVoice.load(model_path)
             except Exception as e:
                 self._controller.log_error(f"Failed to load voice model: {e}")
                 return
