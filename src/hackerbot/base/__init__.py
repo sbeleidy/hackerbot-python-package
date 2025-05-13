@@ -17,8 +17,10 @@
 
 from hackerbot.utils.hackerbot_helper import HackerbotHelper
 from .maps import Maps
-from .speech import Speech
 import time
+import sounddevice as sd
+from piper.voice import PiperVoice
+import numpy as np
 
 class Base():    
     def __init__(self, controller: HackerbotHelper):
@@ -31,7 +33,6 @@ class Base():
         self.initialize() # Call before any action is done on the base
 
         self.maps = Maps(controller)
-        self.speech = Speech(controller)
 
         self._future_completed = False
         self._docked = True # Default to true, assume always start from charger
@@ -223,3 +224,60 @@ class Base():
             time.sleep(3.0)
             self.dock(block=False)
         self._controller.destroy()
+
+    def speak(self, model_src, text, speaker_id=None):
+        """
+        Synthesize and play speech audio based on the given text and voice model.
+
+        This function attempts to load a voice model, initialize an audio stream,
+        synthesize the given text into audio, and play it through the audio output
+        stream. If any step fails, an error is logged, and the process is aborted.
+
+        Args:
+            model_src: The source of the voice model to load for speech synthesis.
+            text: The text content to be synthesized into speech.
+            speaker_id (optional): The ID of the speaker to use, if applicable.
+
+        Returns:
+            None
+        """
+        try:
+            model = model_src
+            try:
+                voice = PiperVoice.load(model)
+            except Exception as e:
+                self._controller.log_error(f"Failed to load voice model: {e}")
+                return
+
+            try:
+                stream = sd.OutputStream(
+                    samplerate=voice.config.sample_rate,
+                    channels=1,
+                    dtype='int16',
+                    blocksize=0  # Let sounddevice choose blocksize automatically
+                )
+            except Exception as e:
+                self._controller.log_error(f"Failed to initialize audio stream: {e}")
+                return
+
+            try:
+                with stream:
+                    for audio_bytes in voice.synthesize_stream_raw(text, speaker_id=speaker_id):
+                        try:
+                            int_data = np.frombuffer(audio_bytes, dtype=np.int16)
+                            stream.write(int_data)
+                        except Exception as e:
+                            self._controller.log_error(f"Error writing audio data to stream: {e}")
+                            break
+
+                    try:
+                        stream.stop()
+                    except Exception as e:
+                        self._controller.log_error(f"Failed to stop audio stream cleanly: {e}")
+
+                print("Finished speaking.")
+
+            except Exception as e:
+                self._controller.log_error(f"Error during audio streaming: {e}")
+        except Exception as e:
+            self._controller.log_error(f"Error in base:speak: {e}")
