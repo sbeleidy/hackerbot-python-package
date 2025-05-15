@@ -248,13 +248,13 @@ class Base():
                 model_path = tts_helper.get_or_download_model(model_src)
             except Exception as e:
                 self._controller.log_error(str(e))
-                return
+                return False
 
             try:
                 voice = PiperVoice.load(model_path)
             except Exception as e:
                 self._controller.log_error(f"Failed to load voice model: {e}")
-                return
+                return False
 
             try:
                 stream = sd.OutputStream(
@@ -265,7 +265,7 @@ class Base():
                 )
             except Exception as e:
                 self._controller.log_error(f"Failed to initialize audio stream: {e}")
-                return
+                return False
 
             try:
                 with stream:
@@ -283,8 +283,11 @@ class Base():
                         self._controller.log_error(f"Failed to stop audio stream cleanly: {e}")
 
                 print("Finished speaking.")
+                return True
 
             except Exception as e:
                 self._controller.log_error(f"Error during audio streaming: {e}")
+                return False
         except Exception as e:
             self._controller.log_error(f"Error in base:speak: {e}")
+            return False
