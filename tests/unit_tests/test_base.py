@@ -201,7 +201,8 @@ class TestHackerbotBase(unittest.TestCase):
     @patch("numpy.frombuffer", return_value=np.array([1, 2, 3], dtype=np.int16))
     @patch("hackerbot.base.sd.OutputStream")
     @patch("hackerbot.base.PiperVoice.load")
-    def test_speak_success(self, mock_load, mock_stream, mock_frombuffer, mock_print):
+    @patch("hackerbot.base.TTSHelper.get_or_download_model", return_value="/fake/model/path")
+    def test_speak_success(self, mock_get_model, mock_load, mock_stream, mock_frombuffer, mock_print):
         base = Base(self.mock_controller)
 
         # Setup mock voice
@@ -228,16 +229,18 @@ class TestHackerbotBase(unittest.TestCase):
         self.assertFalse(self.mock_controller.log_error.called)
         mock_print.assert_called_once_with("Finished speaking.")
 
+    @patch("hackerbot.base.TTSHelper.get_or_download_model", return_value="/fake/model/path")
     @patch("hackerbot.base.PiperVoice.load", side_effect=Exception("load failed"))
-    def test_speak_model_load_failure(self, mock_load):
+    def test_speak_model_load_failure(self, mock_load, mock_get_model):
         base = Base(self.mock_controller)
         base.speak("bad_model", "test")
         self.mock_controller.log_error.assert_called_once()
         self.assertIn("Failed to load voice model", self.mock_controller.log_error.call_args[0][0])
 
+    @patch("hackerbot.base.TTSHelper.get_or_download_model", return_value="/fake/model/path")
     @patch("hackerbot.base.sd.OutputStream", side_effect=Exception("stream init failed"))
     @patch("hackerbot.base.PiperVoice.load")
-    def test_speak_stream_init_failure(self, mock_load, mock_stream):
+    def test_speak_stream_init_failure(self, mock_load, mock_stream, mock_get_model):
         mock_voice = MagicMock()
         mock_voice.config.sample_rate = 16000
         mock_load.return_value = mock_voice
@@ -248,10 +251,11 @@ class TestHackerbotBase(unittest.TestCase):
         self.mock_controller.log_error.assert_called_once()
         self.assertIn("Failed to initialize audio stream", self.mock_controller.log_error.call_args[0][0])
 
+    @patch("hackerbot.base.TTSHelper.get_or_download_model", return_value="/fake/model/path")
     @patch("numpy.frombuffer", side_effect=Exception("conversion failed"))
     @patch("hackerbot.base.sd.OutputStream")
     @patch("hackerbot.base.PiperVoice.load")
-    def test_speak_audio_conversion_failure(self, mock_load, mock_stream, mock_frombuffer):
+    def test_speak_audio_conversion_failure(self, mock_load, mock_stream, mock_frombuffer, mock_get_model):
         mock_voice = MagicMock()
         mock_voice.config.sample_rate = 16000
         mock_voice.synthesize_stream_raw.return_value = [b'\x01\x02']

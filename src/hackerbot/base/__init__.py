@@ -247,7 +247,7 @@ class Base():
                 tts_helper = TTSHelper()
                 model_path = tts_helper.get_or_download_model(model_src)
             except Exception as e:
-                self._controller.log_error(str(e))
+                self._controller.log_error(f"Failed to get or download model: {e}")
                 return
 
             try:
